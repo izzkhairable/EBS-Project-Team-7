@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bms-flask-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bms-flask-app
+  template:
+    metadata:
+      labels:
+        app: bms-flask-app
+        version: v1
+    spec:
+      containers:
+      - name: bms-flask-app
+        image: darrenho1994/yo:latest 
+        imagePullPolicy: Always
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+          requests:
+            memory: 32Mi
+        volumeMounts:
+        - mountPath: /code/config
+          name: bms-flask-app 
+      volumes:
+      - name: bms-flask-app
+        configMap: 
+          name: bms-flask-app
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bms-flask-app
+data:
+  weather.cfg: |
+    # This file contains all settings for the irrigation control
+    [redis]
+    redisHost = redis
+    redisPort = 6379
+    redisPassword = kPppOZp2hC
+    redisDb = 5

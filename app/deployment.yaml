@@ -1,0 +1,59 @@
+apiVersion: apps/v1 
+kind: Deployment 
+metadata: 
+  name: bms-flask
+spec: 
+  replicas: 1 
+  selector: 
+    matchLabels: 
+      app: bms-flask
+  template: 
+    metadata: 
+      labels: 
+        app: bms-flask 
+        version: v1 
+    spec: 
+      containers: 
+      - name: bms-flask 
+        image: darrenho1994/bms-flask
+        imagePullPolicy: Always 
+        resources:  
+          limits: 
+            memory: "128Mi" 
+            cpu: "500m" 
+          requests: 
+            memory: 32Mi 
+        ports: 
+        - containerPort: 5000 
+          name: http 
+--- 
+apiVersion: v1 
+kind: Service 
+metadata: 
+  name: bms-flask-service 
+  labels: 
+    app: bms-flask
+spec: 
+  ports: 
+  - port: 5000 
+    name: http 
+    targetPort: 5000 
+  selector: 
+    app: bms-flask 
+--- 
+apiVersion: gateway.kyma-project.io/v1alpha1 
+kind: APIRule 
+metadata: 
+  name: bms-flask-rule
+spec: 
+  gateway: kyma-gateway.kyma-system.svc.cluster.local 
+  service: 
+    name: bms-flask-service 
+    port: 5000 
+    host: bms-flask 
+  rules: 
+    - path: /.* 
+      methods: ["GET","POST"] 
+      mutators: [] 
+      accessStrategies: 
+        - handler: noop 
