@@ -1,0 +1,59 @@
+
+# Serverless function to retrieve IoT data and store it in Redis
+apiVersion: serverless.kyma-project.io/v1alpha1
+kind: Function
+metadata:
+  name: beach-monitoring-system-strong-wave-function # Change here for your name!
+spec:
+  deps: "requests==2.26.0\r\nredis==3.5.3"
+  env:
+  - name: REDISDBNO 
+    value: "5" #Set the redis db number within your team (0-15)
+  - name: REDISHOST
+    value: redis
+  - name: REDISPORT
+    value: "6379"
+  - name: REDISPASSWORD
+    value: kPppOZp2hC
+  - name: IOTTHINGURL
+    value: https://appiot-mds.cfapps.eu10.hana.ondemand.com/Things('
+  - name: IOTTENANT
+    value: "1954515505"
+  - name: IOTMGMTURL
+    value: https://a4042ecf-281e-4d4a-b721-c9b43461e188.eu10.cp.iot.sap/a4042ecf-281e-4d4a-b721-c9b43461e188/iot/core/api/v1/tenant/
+  - name: IOTUSER
+    value: iot-thing-user
+  - name: IOTPASSWORD
+    value: SAPArm#01
+  - name: CLIENTSECRET
+    value: MqgvE0uZhB63HC4xtZtl5ifvS+8=
+  - name: CLIENTID
+    value: sb-32564232-426c-4b44-842d-1beed50a9c45!b102169|iotae_service!b5
+  - name: PYTHONUNBUFFERED
+    value: "TRUE"
+  - name: AUTHENTICATIONURL
+    value: https://smu-iot.authentication.eu10.hana.ondemand.com/oauth/token
+  maxReplicas: 1
+  minReplicas: 1
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  runtime: python38
+  source: | 
+                import os
+                import redis
+                import json
+                def main(event, context):
+                    # redisHost = 'localhost'
+                    # redisPort = '6379'
+                    # redisPassword = ''
+                    # redisDb = 0
+                        # r = redis.Redis(host=redisHost, port = redisPort, db=int(redisDb), password=redisPassword, socket_timeout=None)
+                    thingId = event["data"]["thingID"]
+                    print(thingId)
+                    print("Hello")
+              
