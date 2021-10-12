@@ -8,7 +8,7 @@ kubectl apply -f ./deployment.yaml
 
 
 How to access pod files:
-1. kubectl exec --stdin --tty capexample-app-58d8cbb99c-n8d9f -- /bin/bash 
+1. kubectl exec --stdin --tty redis-74fd9b4b88-nd55b -- /bin/bash 
 
 2. type redis-cli
 
