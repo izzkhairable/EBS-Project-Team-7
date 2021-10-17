@@ -92,19 +92,18 @@ def main():
         events_data_json=json.dumps(events_data_list_dict),
     )
 
-    @app.route("/dashboard", method=["GET"])
-    def dashboard():
-        items = client.get_account_images('Darkdrium', page=0)
-        item_list = ''
-        for item in items:
-            curr_item = '{"link": "' + item.link + '", "title": "' + item.title + '"}'
-            item_list = item_list + curr_item + "|"
-        first_image_to_display = 'https://flxt.tmsimg.com/assets/p185179_b_v8_ab.jpg'
-        if len(item_list) > 0:
-            first_image_to_display = json.loads(item_list[:-1].split('|')[0])['link']
-            last_image_to_display = json.loads(item_list[:-1].split('|')[-1])['link']
-
-        return render_template("dashboard.html", data=item_list[:-1], data2=first_image_to_display, data3=last_image_to_display)
+@app.route("/dashboard")
+def dashboard():
+    items = client.get_account_images('Darkdrium', page=0)
+    item_list = ''
+    for item in items:
+        curr_item = '{"link": "' + item.link + '", "title": "' + item.title + '"}'
+        item_list = item_list + curr_item + "|"
+    first_image_to_display = 'https://flxt.tmsimg.com/assets/p185179_b_v8_ab.jpg'
+    if len(item_list) > 0:
+        first_image_to_display = json.loads(item_list[:-1].split('|')[0])['link']
+        last_image_to_display = json.loads(item_list[:-1].split('|')[-1])['link']
+    return render_template("dashboard.html", data=item_list[:-1], data2=first_image_to_display, data3=last_image_to_display)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True)
