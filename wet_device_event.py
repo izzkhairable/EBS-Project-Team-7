@@ -1,4 +1,5 @@
 import os
+from twilio.rest import Client
 import redis
 import json
 import requests
@@ -63,6 +64,15 @@ def main(event, context):
     redisPort = os.environ.get('REDISPORT')
     redisPassword = os.environ.get('REDISPASSWORD')
     redisDb = os.environ.get('REDISDBNO')
+
+    ##Twilio setup
+    account_sid = os.environ.get['TWILIO_ACCOUNT_SID']
+    auth_token = os.environ.get['TWILIO_AUTH_TOKEN']
+    sender_number = os.environ.get['SENDER_NUMBER']
+    recipient_number = os.environ.get['RECIPIENT_NUMBER']
+    client = Client(account_sid, auth_token)
+
+
     r = redis.Redis(host=redisHost, port=redisPort, db=int(
         redisDb), password=redisPassword, socket_timeout=None, decode_responses=True)
     #event = {'data': {'thingId': '38ED5BF550EE4CC6AD2BE9A7BE7111A4', 'thingCoordinate': '1.3050856285437102, 103.93210128266621'}}
@@ -95,50 +105,31 @@ def main(event, context):
                 if device != dataset:
                     r.lrem('devices', 1, r.lrange('devices', 0, -1)[ind])
                     r.rpush('devices', json.dumps(dataset))
-
+    body_message = "Water detected inside the float buoy for Thing ID: " + str(thingId)
     if len(r.lrange(thingId, -1, -1)) == 1:
         prev_date = json.loads(r.lrange(thingId, -1, -1)[0])['datetime']
         min_diff = (datetime.datetime.now() - prev_date).total_seconds()/60
         if min_diff >= 30:  # If the most recent event was logged more than 30 minutes ago, we log again. If not, don't log, because too recent..
-            r.rpush(thingId, '{"event": "strong_wave", "datetime": "' +
+            r.rpush(thingId, '{"event": "wet_device", "datetime": "' +
                     str(datetime.datetime.now()) + '", "zone": "' + thingZone + '"}')
+            # client.messages \
+            #     .create(
+            #         body=body_message,
+            #         from_=str(sender_number),
+            #         to=str(recipient_number)
+            #     )
     else:
-        r.rpush(thingId, '{"event": "strong_wave", "datetime": "' +
+        r.rpush(thingId, '{"event": "wet_device", "datetime": "' +
                     str(datetime.datetime.now()) + '", "zone": "' + thingZone + '"}')
-
-    # We want get rid of all data older than 30 days..
-    for wave_event in r.lrange(thingId, 0, -1):
+        # client.messages \
+        #     .create(
+        #         body=body_message,
+        #         from_=str(sender_number),
+        #         to=str(recipient_number)
+        #     )
+    
+    for wave_event in r.lrange(thingId, 0, -1): # We want get rid of all data older than 30 days..
         the_time = datetime.datetime.strptime(json.loads(
             wave_event)["datetime"], '%Y-%m-%d %H:%M:%S.%f')
         if (datetime.datetime.now() - the_time).days >= 30:
             r.lpop(thingId)
-
-# thingId = '38ED5BF550EE4CC6AD2BE9A7BE7111A4'
-# redisHost = 'localhost'
-# redisPort = '6379'
-# redisPassword = ''
-# redisDb = 0
-# r = redis.Redis(host=redisHost, port = redisPort, db=int(redisDb), password=redisPassword, socket_timeout=None, decode_responses=True)
-# r.flushall()
-
-
-# if r.lrange(thingId, -1, -1) == 1:
-#     prev_date = json.loads(r.lrange(thingId, -1, -1)[0])['datetime']
-#     min_diff = (datetime.datetime.now() - prev_date).total_seconds()/60
-#     if min_diff >= 30: #If the most recent event was logged more than 30 minutes ago, we log again.
-#         r.rpush(thingId, '{"event": "strong_wave", "datetime": "' + str(datetime.datetime.now()) + '"}')
-# else:
-#     r.rpush(thingId, '{"event": "strong_wave", "datetime": "' + str(datetime.datetime.now()) + '"}')
-
-
-# r.rpush(thingId, '{"event": "strong_wave", "datetime": "' + str(datetime.datetime.strptime('2021-09-13 18:34:18.988434', '%Y-%m-%d %H:%M:%S.%f')) + '"}')
-# r.rpush(thingId, '{"event": "strong_wave", "datetime": "' + str(datetime.datetime.strptime('2021-09-14 18:34:18.988434', '%Y-%m-%d %H:%M:%S.%f')) + '"}')
-# r.rpush(thingId, '{"event": "strong_wave", "datetime": "' + str(datetime.datetime.strptime('2021-09-15 18:34:18.988434', '%Y-%m-%d %H:%M:%S.%f')) + '"}')
-
-
-# for wave_event in r.lrange(thingId, 0, -1): #We want get rid of all data older than 30 days..
-#     the_time = datetime.datetime.strptime(json.loads(wave_event)["datetime"], '%Y-%m-%d %H:%M:%S.%f')
-#     if (datetime.datetime.now() - the_time).days >= 30:
-#         r.lpop(thingId)
-
-# print(r.lrange(thingId, 0, -1))

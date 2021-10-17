@@ -1,9 +1,15 @@
 from flask import Flask, jsonify, render_template
+from imgurpython import ImgurClient
 import redis
 import json
 
 app = Flask(__name__)
 
+client_id = '3ef4beacee8d63c'
+client_secret = '75640200bd814140c1e10fe3bd95ed65e9dd490d'
+access_token = '8a06c8a86ac3ef93546cff4ea2cb42956cd60cf4'
+refresh_token = '7e64f091f020ffc5486e9b6f8f97ce9b8ed2ad6e'
+client = ImgurClient(client_id, client_secret, access_token, refresh_token)
 
 @app.route("/", methods=["GET"])
 def main():
@@ -86,6 +92,19 @@ def main():
         events_data_json=json.dumps(events_data_list_dict),
     )
 
+@app.route("/dashboard", method=["GET"])
+def dashboard():
+    items = client.get_account_images('Darkdrium', page=0)
+    item_list = ''
+    for item in items:
+        curr_item = '{"link": "' + item.link + '", "title": "' + item.title + '"}'
+        item_list = item_list + curr_item + "|"
+    first_image_to_display = 'https://flxt.tmsimg.com/assets/p185179_b_v8_ab.jpg'
+    if len(item_list) > 0:
+        first_image_to_display = json.loads(item_list[:-1].split('|')[0])['link']
+        last_image_to_display = json.loads(item_list[:-1].split('|')[-1])['link']
+
+    return render_template("dashboard.html", data=item_list[:-1], data2=first_image_to_display, data3=last_image_to_display)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True)
