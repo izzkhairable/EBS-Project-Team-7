@@ -61,8 +61,6 @@ spec:
                   data = json.loads(response.text)
                   bToken = data["access_token"]
                   return bToken
-              # Get (almost) all data of the "thing"
-
 
               def getThingData(iotThingUrl, bToken, thingId):
                   print("ThingID: " + thingId)
@@ -80,9 +78,6 @@ spec:
                           sensorTypeId = j['_sensorTypeId']
                   return (deviceId, sensorId, sensorTypeId)
 
-              # Retrieve capabilities from SAP IoT device management (remaining data needed)
-
-
               def getThingCapabilities(iotUrl, iotUser, iotPassword, iotTenant, sensorType):
                   callUrl = iotUrl + iotTenant + "/sensorTypes/" + sensorType
                   response = requests.get(callUrl, auth=HTTPBasicAuth(iotUser, iotPassword))
@@ -94,7 +89,6 @@ spec:
                       if capability["type"] == "command":
                           commandCapabilityId = capability["id"]
                   return commandCapabilityId
-
 
               def main(event, context):
                   clientSecret = os.getenv('CLIENTSECRET')
@@ -109,53 +103,41 @@ spec:
                   redisPort = os.environ.get('REDISPORT')
                   redisPassword = os.environ.get('REDISPASSWORD')
                   redisDb = os.environ.get('REDISDBNO')
-                  r = redis.Redis(host=redisHost, port=redisPort, db=int(
-                      redisDb), password=redisPassword, socket_timeout=None, decode_responses=True)
-                  #event = {'data': {'thingId': '38ED5BF550EE4CC6AD2BE9A7BE7111A4', 'thingCoordinate': '1.3050856285437102, 103.93210128266621'}}
+                  r = redis.Redis(host=redisHost, port=redisPort, db=int(redisDb), password=redisPassword, socket_timeout=None, decode_responses=True)
                   thingId = event["data"]["thingID"]
                   thingLatitude = event["data"]["thingLatitude"]
                   thingLongitude = event["data"]["thingLongitude"]
                   thingZone = event["data"]["thingZone"]
                   bearerToken = getBearerToken(authUrl, clientId, clientSecret)
-                  (deviceId, sensorId, sensorTypeId) = getThingData(
-                      iotThingUrl, bearerToken, thingId)
-                  commandCapabilityId = getThingCapabilities(
-                      iotUrl, iotUser, iotPassword, iotTenant, sensorTypeId)
-                  dataset = {"thingId": thingId, "deviceId": deviceId, "sensorId": sensorId,
-                            "commandCapabilityId": commandCapabilityId, "coordinate": {"lat": thingLatitude, "lng": thingLongitude}, "zone": thingZone}
+                  (deviceId, sensorId, sensorTypeId) = getThingData(iotThingUrl, bearerToken, thingId)
+                  commandCapabilityId = getThingCapabilities(iotUrl, iotUser, iotPassword, iotTenant, sensorTypeId)
 
+                  
+                  #Check if the Thing ID already stored in Redis
+                  dataset = {"thingId": thingId, "deviceId": deviceId, "sensorId": sensorId, "commandCapabilityId": commandCapabilityId, "coordinate": {"lat": thingLatitude, "lng": thingLongitude}, "zone": thingZone}
                   deviceFound = 0
                   for device in r.lrange('devices', 0, -1):
                       device = json.loads(device)
                       if device['thingId'] == thingId:
                           deviceFound = deviceFound + 1
-
-                  # We check if this Thing ID and the Thing Data are stored in Redis, if not, we push. If already exist, we check if anything else has changed, such as the coordinates, then we delete old data and replace it with new data.
-                  if deviceFound == 0:
+                  if deviceFound == 0: #If the ThingID along with the Thing Data are not found in Redis, we push it to Redis.
                       r.rpush('devices', json.dumps(dataset))
-                  else:
-                      # dataset = {"thingId": thingId, "deviceId": deviceId, "sensorId": sensorId, "commandCapabilityId": commandCapabilityId, "coordinate": "1314" }
+                  else: #If the ThingID along with the Thing Data are already found in Redis, we check if any of the Thing properties has changed, such as the coordinate, sensorID, etc.. 
                       for ind in range(len(r.lrange('devices', 0, -1))):
                           device = json.loads(r.lrange('devices', 0, -1)[ind])
-                          if device['thingId'] == thingId:
+                          if device['thingId'] == thingId: #If the ThingID has some properties changed such as the coordinate, SensorID etc.. we delete the ThingID from Redis and add again (to update the ThingID and the properties)
                               if device != dataset:
                                   r.lrem('devices', 1, r.lrange('devices', 0, -1)[ind])
                                   r.rpush('devices', json.dumps(dataset))
 
-                  if len(r.lrange(thingId, -1, -1)) == 1:
-                      prev_date = json.loads(r.lrange(thingId, -1, -1)[0])['datetime']
+                  #### Logging of strong wave event happens here #####
+                  if len(r.lrange(thingId, -1, -1)) == 1: 
+                      prev_date = datetime.datetime.strptime(json.loads(r.lrange(thingId, -1, -1)[0])['datetime'], '%Y-%m-%d %H:%M:%S.%f')
                       min_diff = (datetime.datetime.now() - prev_date).total_seconds()/60
-                      if min_diff >= 30:  # If the most recent event was logged more than 30 minutes ago, we log again. If not, don't log, because too recent..
+                      if min_diff >= 30:  # If the most recent event was logged more than 30 minutes ago, we log again. If not, don't.
                           r.rpush(thingId, '{"event": "strong_wave", "datetime": "' +
                                   str(datetime.datetime.now()) + '", "zone": "' + thingZone + '"}')
-                  else:
+                  else: #If no event is found for the ThingID, it means it's our first time logging, so just ahead and log right away
                       r.rpush(thingId, '{"event": "strong_wave", "datetime": "' +
                                   str(datetime.datetime.now()) + '", "zone": "' + thingZone + '"}')
-
-                  # We want get rid of all data older than 30 days..
-                  for wave_event in r.lrange(thingId, 0, -1):
-                      the_time = datetime.datetime.strptime(json.loads(
-                          wave_event)["datetime"], '%Y-%m-%d %H:%M:%S.%f')
-                      if (datetime.datetime.now() - the_time).days >= 30:
-                          r.lpop(thingId)
                   

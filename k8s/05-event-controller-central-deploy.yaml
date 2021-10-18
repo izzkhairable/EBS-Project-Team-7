@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: bms-flask-app
+  name: led-controller
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: bms-flask-app
+      app: led-controller
   template:
     metadata:
       labels:
-        app: bms-flask-app
+        app: led-controller
         version: v1
     spec:
       containers:
-      - name: bms-flask-app
-        image: darrenho1994/yo:latest 
+      - name: led-controller
+        image: darrenho1994/led-controller:latest 
         imagePullPolicy: Always
         env:
         - name: PYTHONUNBUFFERED
@@ -28,21 +28,27 @@ spec:
             memory: 32Mi
         volumeMounts:
         - mountPath: /code/config
-          name: bms-flask-app 
+          name: led-controller-config-configmap 
       volumes:
-      - name: bms-flask-app
+      - name: led-controller-config-configmap
         configMap: 
-          name: bms-flask-app
+          name: led-controller-configfile
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: bms-flask-app
+  name: led-controller-configfile
 data:
-  weather.cfg: |
+  led_controller.cfg: |
     # This file contains all settings for the irrigation control
+
     [redis]
     redisHost = redis
     redisPort = 6379
     redisPassword = kPppOZp2hC
-    redisDb = 5
+    redisDb = 0
+
+    [sapiot]
+    commandUrl = https://a4042ecf-281e-4d4a-b721-c9b43461e188.eu10.cp.iot.sap/a4042ecf-281e-4d4a-b721-c9b43461e188/iot/core/api/v1/tenant/1954515505/devices/
+    iotUser = iot-thing-user # Common user, you can keep it!
+    iotPassword = 'SAPArm#01'

@@ -1,0 +1,90 @@
+apiVersion: apps/v1 
+kind: Deployment 
+metadata: 
+  name: beach-monitoring-system-flask-app
+spec: 
+  replicas: 1 
+  selector: 
+    matchLabels: 
+      app: beach-monitoring-system-flask-app
+  template: 
+    metadata: 
+      labels: 
+        app: beach-monitoring-system-flask-app 
+        version: v1 
+    spec: 
+      containers: 
+      - name: beach-monitoring-system-flask-app
+        image: darrenho1994/beach-monitoring-system-flask-app
+        imagePullPolicy: Always 
+        resources:  
+          limits: 
+            memory: "128Mi" 
+            cpu: "500m" 
+          requests: 
+            memory: 32Mi 
+
+        ports: 
+        - containerPort: 5000 
+          name: http 
+        volumeMounts:
+        - mountPath: /app/config
+          name: beach-monitoring-system-flask-app-config-configmap 
+      volumes:
+      - name: beach-monitoring-system-flask-app-config-configmap
+        configMap: 
+          name: beach-monitoring-system-flask-app-configfile
+
+--- 
+apiVersion: v1 
+kind: Service 
+metadata: 
+  name: beach-monitoring-system-flask-app-service 
+  labels: 
+    app: beach-monitoring-system-flask-app
+spec: 
+  ports: 
+  - port: 5000 
+    name: http 
+    targetPort: 5000 
+  selector: 
+    app: beach-monitoring-system-flask-app 
+--- 
+apiVersion: gateway.kyma-project.io/v1alpha1 
+kind: APIRule 
+metadata: 
+  name: beach-monitoring-system-flask-app-rule
+spec: 
+  gateway: kyma-gateway.kyma-system.svc.cluster.local 
+  service: 
+    name: beach-monitoring-system-flask-app-service 
+    port: 5000 
+    host: beach-monitoring-system-flask-app 
+  rules: 
+    - path: /.* 
+      methods: ["GET","POST"] 
+      mutators: [] 
+      accessStrategies: 
+        - handler: noop 
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: beach-monitoring-system-flask-app-configfile
+data:
+  flaskapp.cfg: |
+    # This file contains all settings for the irrigation control
+    [redis]
+    redisHost = redis
+    redisPort = 6379
+    redisPassword = kPppOZp2hC
+    redisDb = 0
+
+    [imgur]
+    client_id = 3ef4beacee8d63c
+    client_secret = 75640200bd814140c1e10fe3bd95ed65e9dd490d
+    access_token = 8a06c8a86ac3ef93546cff4ea2cb42956cd60cf4
+    refresh_token = 7e64f091f020ffc5486e9b6f8f97ce9b8ed2ad6e
+
+    [worldweatheronline]
+    apiKey = 16293d33ab954ad0ae1193626211710
