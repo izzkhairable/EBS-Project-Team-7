@@ -4,44 +4,88 @@ import redis
 import json
 import requests
 import configparser
+import cv2
+import datetime
+import imutils
+import numpy as np
+import os
+from urllib.request import urlopen
+
+#https://data-flair.training/blogs/python-project-real-time-human-detection-counting/
+HOGCV = cv2.HOGDescriptor()
+HOGCV.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
+def url_to_image(url, readFlag=cv2.IMREAD_COLOR):
+    resp = urlopen(url) #https://newbedev.com/how-can-i-read-an-image-from-an-internet-url-in-python-cv2-scikit-image-and-mahotas
+    image = np.asarray(bytearray(resp.read()), dtype="uint8")
+    image = cv2.imdecode(image, readFlag)
+    return image
+
+def detect(frame):
+    bounding_box_cordinates, weights =  HOGCV.detectMultiScale(frame, winStride = (4, 4), padding = (8, 8), scale = 1.03)
+    person = 0
+    
+    for x,y,w,h in bounding_box_cordinates:
+        # cv2.rectangle(frame, (x,y), (x+w,y+h), (0,255,0), 2)
+        # cv2.putText(frame, f'person {person}', (x,y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
+        person += 1
+    # cv2.putText(frame, 'Status : Detecting ', (40,40), cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,0,0), 2)
+    # cv2.putText(frame, f'Total Persons : {person}', (40,70), cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,0,0), 2)
+    # cv2.imshow('output', frame)
+    return person
+
+def humanDetector(args):
+    return detectByPathImage(args, None)
+
+def detectByPathImage(path, output_path):
+    image = imutils.url_to_image(path)
+    image = imutils.resize(image, width = min(800, image.shape[1])) 
+    result_image = detect(image)
+    if output_path is not None:
+        cv2.imwrite(output_path, result_image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    return result_image
 
 app = Flask(__name__)
 
 config = configparser.ConfigParser(inline_comment_prefixes="#")
 config.read(['./config/flaskapp.cfg'])
 
-#[redis]
+# #[redis]
 redisHost = config.get("redis", "redisHost")
 redisPort = int(config.get("redis", "redisPort"))
 redisPassword = config.get("redis", "redisPassword")
 redisDb = int(config.get("redis", "redisDb"))
 r = redis.Redis(host=redisHost, port=redisPort, db=int(redisDb), password=redisPassword, socket_timeout=None, decode_responses=True)
 
-#[imgur]
+# #[imgur]
 client_id = config.get("imgur", "client_id")
 client_secret = config.get("imgur", "client_secret")
 access_token = config.get("imgur", "access_token")
 refresh_token = config.get("imgur", "refresh_token")
 client = ImgurClient(client_id, client_secret, access_token, refresh_token)
 
+#[ipCam]
+ipCamUrl = config.get("ipCam", "ipCamUrl")
+
 #[worldweatheronline]
 apiKey = config.get("worldweatheronline", "apiKey")
 
 
-# redisHost = 'redis'
+# redisHost = 'localhost'
 # redisPort = '6379'
-# redisPassword = 'kPppOZp2hC'
+# redisPassword = ''
 # redisDb = 0
 # r = redis.Redis(host=redisHost, port=redisPort, db=int(redisDb), password=redisPassword, socket_timeout=None, decode_responses=True)
+# r.flushall()
 
+client_id = '3ef4beacee8d63c'
+client_secret = '75640200bd814140c1e10fe3bd95ed65e9dd490d'
+access_token = '8a06c8a86ac3ef93546cff4ea2cb42956cd60cf4'
+refresh_token = '7e64f091f020ffc5486e9b6f8f97ce9b8ed2ad6e'
+client = ImgurClient(client_id, client_secret, access_token, refresh_token)
 
-# client_id = '3ef4beacee8d63c'
-# client_secret = '75640200bd814140c1e10fe3bd95ed65e9dd490d'
-# access_token = '8a06c8a86ac3ef93546cff4ea2cb42956cd60cf4'
-# refresh_token = '7e64f091f020ffc5486e9b6f8f97ce9b8ed2ad6e'
-# client = ImgurClient(client_id, client_secret, access_token, refresh_token)
-
-# apiKey = '16293d33ab954ad0ae1193626211710'
+apiKey = '16293d33ab954ad0ae1193626211710'
 
 @app.route("/", methods=["GET"])
 def main():
@@ -131,10 +175,6 @@ def dashboard():
     for item in items:
         curr_item = '{"link": "' + item.link + '", "title": "' + item.title + '"}'
         item_list = item_list + curr_item + "|"
-    first_item_to_display = 'https://flxt.tmsimg.com/assets/p185179_b_v8_ab.jpg'
-    if len(item_list) > 0:
-        first_item_to_display = item_list[:-1].split('|')[0]
-        last_item_to_display = item_list[:-1].split('|')[-1]
     forecast_data = json.dumps(requests.get('http://api.worldweatheronline.com/premium/v1/marine.ashx?key=' + apiKey + '&format=json&q=1.3883761,103.9787106').json())
 #     forecast_data = json.dumps({
 #             "data": {
@@ -2921,8 +2961,66 @@ def dashboard():
 #             }
 #         }
 # )
+    
+    HOGCV = cv2.HOGDescriptor()
+    HOGCV.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
 
-    return render_template("dashboard.html", data=item_list[:-1], first_item=first_item_to_display, second_item=last_item_to_display, forecast_data=forecast_data)
+
+    # count = humanDetector("http://222.164.109.140:666/image.jpg")
+    count = humanDetector(ipCamUrl)
+
+
+    ########DONT PUSH THIS TO PRODUCTION#######
+    # r.rpush("devices", "{\"thingId\": \"38ED5BF550EE4CC6AD2BE9A7BE7111A4\", \"deviceId\": \"dcac5d23-cf60-44ff-82e8-b1fb4fd69efb\", \"sensorId\": \"f1ff9a46-86f7-47ef-befb-ccb8a76b90a8\", \"commandCapabilityId\": \"24c65333-6630-46d2-b4b8-69ca3f3786df\", \"coordinate\": {\"lat\": \"1.3050856285437102\", \"lng\": \"103.93210128266621\"}, \"zone\": \"East Coast Park Zone 1\"}")
+    # r.rpush("38ED5BF550EE4CC6AD2BE9A7BE7111A4DATACOLLECTION", "{\"datetime\": \"2021-10-23 18:11:12.808428\", \"zone\": \"East Coast Park Zone 1\", \"ambientTemperature\": 21.0, \"ambientPressure\": 101.0, \"ambientLight\": 252, \"ambientHumidity\": 59, \"gyroscopeX\": 1.0, \"gyroscopeY\": -3.0, \"gyroscopeZ\": -1.0}")
+    # r.rpush("38ED5BF550EE4CC6AD2BE9A7BE7111A4DATACOLLECTION", "{\"datetime\": \"2021-10-23 18:12:17.172217\", \"zone\": \"East Coast Park Zone 1\", \"ambientTemperature\": 23.0, \"ambientPressure\": 101.0, \"ambientLight\": 252, \"ambientHumidity\": 58, \"gyroscopeX\": 1.0, \"gyroscopeY\": -3.0, \"gyroscopeZ\": -1.0}")
+    # r.rpush("38ED5BF550EE4CC6AD2BE9A7BE7111A4DATACOLLECTION", "{\"datetime\": \"2021-10-23 18:13:17.829322\", \"zone\": \"East Coast Park Zone 1\", \"ambientTemperature\": 24.0, \"ambientPressure\": 101.0, \"ambientLight\": 0, \"ambientHumidity\": 58, \"gyroscopeX\": 1.0, \"gyroscopeY\": -3.0, \"gyroscopeZ\": -1.0}")
+    ########DONT PUSH THIS TO PRODUCTION#######
+
+    latest_sensor_data = ''
+    if len(r.lrange("38ED5BF550EE4CC6AD2BE9A7BE7111A4DATACOLLECTION", -1, -1)) > 0:
+        latest_sensor_data = json.loads(r.lrange("38ED5BF550EE4CC6AD2BE9A7BE7111A4DATACOLLECTION", -1, -1)[0]) 
+    
+    outcome = ''
+    if len(r.lrange('38ED5BF550EE4CC6AD2BE9A7BE7111A4POPULATION', 0, -1)) > 0:
+        dailyPopulationList = r.lrange('38ED5BF550EE4CC6AD2BE9A7BE7111A4POPULATION', 0, -1)[::-1]
+        number_of_people_for_current_day = 0
+        for index in range(0, len(dailyPopulationList)):
+            jsonobj = json.loads(dailyPopulationList[index])
+            eventdate = datetime.datetime.strptime(jsonobj["datetime"], '%Y-%m-%d %H:%M:%S.%f')
+            eventyear = eventdate.year
+            eventmonth = eventdate.month
+            eventday = eventdate.day
+            previousjsonobj = json.loads(dailyPopulationList[index-1])
+            previouseventdate = datetime.datetime.strptime(previousjsonobj["datetime"], '%Y-%m-%d %H:%M:%S.%f')
+
+            if index > 0 and index < len(dailyPopulationList)-1:
+                if (eventyear == previouseventdate.year and eventmonth == previouseventdate.month and eventday == previouseventdate.day):
+                    number_of_people_for_current_day+=jsonobj['people_count']
+                else:
+                    outcome+= json.dumps({"date": str(previouseventdate), "count": number_of_people_for_current_day}) + "|"
+                    number_of_people_for_current_day = jsonobj['people_count']
+            elif index == len(dailyPopulationList)-1:
+                if (eventyear == previouseventdate.year and eventmonth == previouseventdate.month and eventday == previouseventdate.day):
+                    number_of_people_for_current_day+=jsonobj['people_count']
+                    outcome+= json.dumps({"date": str(eventdate), "count": number_of_people_for_current_day}) + "|"
+                else:
+                    outcome+= json.dumps({"date": str(previouseventdate), "count": number_of_people_for_current_day}) + "|"
+                    number_of_people_for_current_day = jsonobj['people_count']
+                    outcome+= json.dumps({"date": str(eventdate), "count": jsonobj['people_count']}) + "|"
+            elif index == 0:
+                number_of_people_for_current_day+=jsonobj['people_count']
+    try:
+        response = requests.get(
+            ipCamUrl, timeout=10)
+        file = open(os.path.dirname(os.path.abspath(__file__)) + "/static/image/image.png", "wb")
+        file.write(response.content)
+        file.close()
+    except:
+        print(os.path.dirname(os.path.abspath(__file__)))
+        print("hello")
+
+    return render_template("dashboard.html", visitor_history_count=outcome[:-1], people_count=count, data=item_list[:-1], forecast_data=forecast_data, next_day_forecast=json.dumps(json.loads(forecast_data)["data"]["weather"][0]), latest_sensor_data=json.dumps(latest_sensor_data))
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True)

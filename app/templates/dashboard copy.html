@@ -105,48 +105,10 @@
                 <div class="row">
                     <div class="col-md-3 col-lg-3 col-sm-3 col-xs-3">
                         <div class="white-box">
-                            <h3 class="text-center"> <i class="fas fa-thermometer-empty"></i>
-                                Air Temperature</h3>
-                            <h1 class="text-center" id="current_temperature">
-                            </h1>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-lg-3 col-sm-3 col-xs-3">
-                        <div class="white-box">
-                            <h3 class="text-center"> <i class="fas fa-tint"></i>
-                                Humidity</h3>
-                            <h1 class="text-center" id="current_humidity">
-                            </h1>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-lg-3 col-sm-3 col-xs-3">
-                        <div class="white-box">
-                            <h3 class="text-center"> <i class="fas fa-tachometer-alt"></i>
-                                Air Pressure</h3>
-                            <h1 class="text-center" id="current_pressure">
-                            </h1>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-lg-3 col-sm-3 col-xs-3">
-                        <div class="white-box">
-                            <h3 class="text-center"> <i class="fab fa-mixcloud"></i>
-                                Light Intensity</h3>
-                            <h1 class="text-center" id="current_light">
-                            </h1>
-                        </div>
-                    </div>
-
-                </div>
-                <div class="row justify-content-center">
-                    <!-- <div class="col-md-5 col-lg-5 col-sm-5 col-xs-5">
-                        <img class="img-fluid" id="beach_img" src="{{data2}}" />
-                    </div> -->
-                    <div class="col-md-3 col-lg-3 col-sm-3 col-xs-3">
-                        <div class="white-box">
-                            <h3 class="box-title">Beach Overview</h3>
+                            <h3 class="box-title">Beach Photos</h3>
                             <form class="form-horizontal form-material">
                                 <div class="form-group mb-12">
-                                    <label class="col-sm-12">Select Time</label>
+                                    <label class="col-sm-12">Select Beach Photo Before</label>
                                     <div class="col-sm-12 border-bottom">
                                         <select class="form-select shadow-none p-0 border-0 form-control-line"
                                             id="renderer" onchange="renderImage()">
@@ -154,35 +116,25 @@
                                     </div>
                                 </div>
                             </form>
-
-                            <div id="carousel_content">
-
-                            </div>
                         </div>
                     </div>
                     <div class="col-md-3 col-lg-3 col-sm-3 col-xs-3">
-                        <div class="container-fluid px-0">
-                            <div class="white-box">
-
-                                <div class="row justify-content-center">
-                                    <h3 class="text-center">
-                                        Current Visitor Count</h3>
-                                    <h1 class="text-center">{{people_count}}
-                                    </h1>
+                        <div class="white-box">
+                            <h3 class="box-title">Beach Photos</h3>
+                            <form class="form-horizontal form-material">
+                                <div class="form-group mb-12">
+                                    <label class="col-sm-12">Select Beach Photo After</label>
+                                    <div class="col-sm-12 border-bottom">
+                                        <select class="form-select shadow-none p-0 border-0 form-control-line"
+                                            id="renderer2" onchange="renderImage()">
+                                        </select>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="white-box">
-
-                                <div class="row justify-content-center">
-                                    <figure class="highcharts-figure">
-                                        <div id="container"></div>
-                                    </figure>
-                                </div>
-                            </div>
+                            </form>
                         </div>
                     </div>
                     <div class="col-md-6 col-lg-6 col-sm-6 col-xs-6">
-                        <div class="white-box" style="overflow-x:auto">
+                        <div class="white-box">
                             <h3 class="box-title">Weather Forecast</h3>
                             <form class="form-horizontal form-material">
                                 <div class="form-group mb-12">
@@ -194,6 +146,47 @@
                                     </div>
                                 </div>
                             </form>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="row justify-content-center">
+                    <!-- <div class="col-md-5 col-lg-5 col-sm-5 col-xs-5">
+                        <img class="img-fluid" id="beach_img" src="{{data2}}" />
+                    </div> -->
+                    <div class="col-md-6 col-lg-6 col-sm-6 col-xs-6" id="carousel_content">
+                        <!-- <div class="white-box">
+                            <div id="carouselExampleFade" class="carousel slide carousel-fade" data-bs-ride="carousel"
+                                data-bs-interval="false">
+                                <div class="carousel-inner">
+                                    <div class="carousel-item active">
+                                        <a href="{{first_item['link']}}"><img src="{{first_item['link']}}" class="d-block w-100" alt="..."></a>
+                                        <div class="carousel-caption d-none d-md-block">
+                                            <h5>{{first_item['title']}}</h5>
+                                        </div>
+                                    </div>
+                                    <div class="carousel-item">
+                                        <a href="{{second_item['link']}}"><img src="{{second_item['link']}}" class="d-block w-100" alt="..."></a>
+                                        <div class="carousel-caption d-none d-md-block">
+                                            <h5>{{second_item['title']}}</h5>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="carousel-control-prev" type="button"
+                                    data-bs-target="#carouselExampleFade" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button"
+                                    data-bs-target="#carouselExampleFade" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
+                            </div>
+                        </div> -->
+                    </div>
+                    <div class="col-md-6 col-lg-6 col-sm-6 col-xs-6">
+                        <div class="white-box" style="overflow-x:auto">
 
                             <table class="table">
                                 <thead>
@@ -257,10 +250,9 @@
 
 
         <input type="hidden" id="ddl_image_list" value="{{data}}" />
+        <input type="hidden" id="oldest_item" value="{{first_item}}" />
+        <input type="hidden" id="newest_item" value="{{second_item}}" />
         <input type="hidden" id="forecast_data" value="{{forecast_data}}" />
-        <input type="hidden" id="next_day_forecast" value="{{next_day_forecast}}" />
-        <input type="hidden" id="latest_sensor_data" value="{{latest_sensor_data}}" />
-        <input type="hidden" id="visitor_history_count" value="{{visitor_history_count}}" />
 
         <footer class="footer text-center"> 2021 © Ample Admin brought to you by <a
                 href="https://www.wrappixel.com/">wrappixel.com</a>
@@ -268,13 +260,6 @@
 
     </div>
     </div>
-    <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/modules/series-label.js"></script>
-    <script src="https://code.highcharts.com/modules/exporting.js"></script>
-    <script src="https://code.highcharts.com/modules/export-data.js"></script>
-    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
-
-
     <script src="{{url_for('static', filename='plugins/bower_components/jquery/dist/jquery.min.js')}}"></script>
     <script src="{{url_for('static', filename='bootstrap/dist/js/bootstrap.bundle.min.js')}}"></script>
     <script src="{{url_for('static', filename='js/app-style-switcher.js')}}"></script>
@@ -289,90 +274,63 @@
     <script src="{{url_for('static', filename='js/pages/dashboards/dashboard1.js')}}"></script>
     <script src="{{url_for('static', filename='jquery/jquery-before-after-slider.js')}}"></script>
     <script src="{{url_for('static', filename='jquery/jquery-before-after-slider-min.js')}}"></script>
-    <script>//https://www.highcharts.com/demo/line-labels
-
-        if (document.getElementById("visitor_history_count").value != '') {
-            visitor_historyList = document.getElementById("visitor_history_count").value.split('|')
-            seriesList = []
-            categoriesList = []
-            for (day of visitor_historyList) {
-                jsonObj = JSON.parse(day)
-                seriesList.push(jsonObj["count"])
-                categoriesList.push(new Date(jsonObj["date"]).getUTCDate().toString() + "-" + parseInt(new Date(jsonObj["date"]).getMonth()+1).toString() + "-" + new Date(jsonObj["date"]).getFullYear().toString())
-            }
-            seriesList.reverse()
-            categoriesList.reverse()
-            Highcharts.chart('container', {
-                chart: {
-                    type: 'line'
-                },
-                title: {
-                    text: 'Visitor Count (Last 5 Days)'
-                },
-                subtitle: {
-                    text: 'Source: WorldClimate.com'
-                },
-                xAxis: {
-                    categories: categoriesList
-                },
-                yAxis: {
-                    title: {
-                        text: 'No. of Beachgoers',
-                        enabled: false
-                    }
-                },
-                plotOptions: {
-                    line: {
-                        dataLabels: {
-                            enabled: true
-                        },
-                        enableMouseTracking: false
-                    }
-                },
-                series: [{
-                    name: '',
-                    data: seriesList
-                }],
-                legend: {
-                    enabled: false //disable legend https://api.highcharts.com/highcharts/legend
-                }
-            });
-        }
-        latest_sensor_data = JSON.parse(document.getElementById("latest_sensor_data").value)
-        document.getElementById("current_temperature").innerText = latest_sensor_data["ambientTemperature"] + " °C"
-        document.getElementById("current_humidity").innerText = latest_sensor_data["ambientHumidity"] + "%"
-        document.getElementById("current_pressure").innerText = latest_sensor_data["ambientPressure"] + " kPa"
-        document.getElementById("current_light").innerText = latest_sensor_data["ambientLight"]
-
+    <script>
         var ddl_image_list = document.getElementById('ddl_image_list').value;
+        var oldest_item = JSON.parse(document.getElementById('oldest_item').value);
+        var newest_item = JSON.parse(document.getElementById('newest_item').value);
+
         var image_list = ddl_image_list.split('|')
-        var ddl1 = `<option selected value="{{url_for('static', filename='image/image.png')}}">Now</option>`
+        var ddl1 = ''
+        var ddl2 = ''
+        var counter = 0;
         for (image of image_list) {
             imgjson = JSON.parse(image)
-
-            ddl1 = ddl1 + "<option value=\"" + imgjson['link'] + "\">" + imgjson['title'] + "</option>";
-
+            if (counter == 0) {
+                ddl1 = ddl1 + "<option selected value=\"" + imgjson['link'] + "\">" + imgjson['title'] + "</option>";
+                ddl2 = ddl2 + "<option value=\"" + imgjson['link'] + "\">" + imgjson['title'] + "</option>";
+            }
+            else if (counter == image_list.length - 1) {
+                ddl1 = ddl1 + "<option value=\"" + imgjson['link'] + "\">" + imgjson['title'] + "</option>";
+                ddl2 = ddl2 + "<option selected value=\"" + imgjson['link'] + "\">" + imgjson['title'] + "</option>";
+            }
+            else {
+                ddl1 = ddl1 + "<option value=\"" + imgjson['link'] + "\">" + imgjson['title'] + "</option>";
+                ddl2 = ddl2 + "<option value=\"" + imgjson['link'] + "\">" + imgjson['title'] + "</option>";
+            }
+            counter = counter + 1
         }
         document.getElementById("renderer").innerHTML = ddl1
+        document.getElementById("renderer2").innerHTML = ddl2
 
         document.getElementById("carousel_content").innerHTML = `
+            <div class="white-box">
                 <div id="carouselExampleFade" class="carousel slide carousel-fade" data-bs-ride="carousel"
                     data-bs-interval="false">
                     <div class="carousel-inner">
                         <div class="carousel-item active">
-                            <a href="{{url_for('static', filename='image/image.png')}}"><img src="{{url_for('static', filename='image/image.png')}}" class="d-block w-100" alt="..."></a>
+                            <a href="${oldest_item['link']}"><img src="${oldest_item['link']}" class="d-block w-100" alt="..."></a>
+                            <div class="carousel-caption d-none d-md-block">
+                                <h5>${oldest_item['title']}</h5>
+                            </div>
+                        </div>
+                        <div class="carousel-item">
+                            <a href="${newest_item['link']}"><img src="${newest_item['link']}" class="d-block w-100" alt="..."></a>
+                            <div class="carousel-caption d-none d-md-block">
+                                <h5>${newest_item['title']}</h5>
+                            </div>
                         </div>
                     </div>
-                    <button class="invisible carousel-control-prev" type="button"
+                    <button class="carousel-control-prev" type="button"
                         data-bs-target="#carouselExampleFade" data-bs-slide="prev">
                         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                         <span class="visually-hidden">Previous</span>
                     </button>
-                    <button class="invisible carousel-control-next" type="button"
+                    <button class="carousel-control-next" type="button"
                         data-bs-target="#carouselExampleFade" data-bs-slide="next">
                         <span class="carousel-control-next-icon" aria-hidden="true"></span>
                         <span class="visually-hidden">Next</span>
                     </button>
+                </div>
                 </div>
 
             `
@@ -383,6 +341,9 @@
             var caption = sel.options[sel.selectedIndex].text;
             var imgurl = sel.value
 
+            var sel2 = document.getElementById("renderer2");
+            var caption2 = sel2.options[sel2.selectedIndex].text;
+            var imgurl2 = sel2.value
 
             document.getElementById("carousel_content").innerHTML = `
             <div class="white-box">
@@ -391,14 +352,23 @@
                     <div class="carousel-inner">
                         <div class="carousel-item active">
                             <a href="${imgurl}"><img src="${imgurl}" class="d-block w-100" alt="..."></a>
+                            <div class="carousel-caption d-none d-md-block">
+                                <h5>${caption}</h5>
+                            </div>
+                        </div>
+                        <div class="carousel-item">
+                            <a href="${imgurl2}"><img src="${imgurl2}" class="d-block w-100" alt="..."></a>
+                            <div class="carousel-caption d-none d-md-block">
+                                <h5>${caption2}</h5>
+                            </div>
                         </div>
                     </div>
-                    <button class="invisible carousel-control-prev" type="button"
+                    <button class="carousel-control-prev" type="button"
                         data-bs-target="#carouselExampleFade" data-bs-slide="prev">
                         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                         <span class="visually-hidden">Previous</span>
                     </button>
-                    <button class="invisible carousel-control-next" type="button"
+                    <button class="carousel-control-next" type="button"
                         data-bs-target="#carouselExampleFade" data-bs-slide="next">
                         <span class="carousel-control-next-icon" aria-hidden="true"></span>
                         <span class="visually-hidden">Next</span>
@@ -413,8 +383,7 @@
         var forecastData = JSON.parse(document.getElementById('forecast_data').value)
 
 
-        var next_day_forecast = JSON.parse(document.getElementById("next_day_forecast").value)
-
+        
         var forecastDDL = ""
         var counter = 0;
         for (x of forecastData['data']['weather']) {
@@ -427,42 +396,6 @@
             counter = counter + 1
         }
         document.getElementById("forecast_date").innerHTML = forecastDDL
-        var weatherHtml = `<th scope="row">Weather</th>`;
-        var temperatureHTML = `<th scope="row">Temperature</th>`;
-        var humidityHTML = `<th scope="row">Humidity</th>`;
-        var pressureHTML = `<th scope="row">Pressure</th>`;
-        var windspeedHTML = `<th scope="row">Wind (km/h)</th>`;
-        var windDirectionHTML = `<th scope="row">Wind Direction</th>`;
-        var swellDirectionTHTML = `<th scope="row">Swell Direction</th>`;
-        var swellPeriodTHTML = `<th scope="row">Swell Period</th>`;
-        var swellHeightTHTML = `<th scope="row">Swell Height (m)</th>`;
-        var swHeightHTML = `<th scope="row">Significant Wave Height (m)	</th>`;
-
-        for (hour of next_day_forecast['hourly']) {
-            weatherHtml = weatherHtml + `<td><img src="${hour['weatherIconUrl'][0]['value']}"/></td>`
-            temperatureHTML = temperatureHTML + `<td>${hour['tempC']}</td>`
-            humidityHTML = humidityHTML + `<td>${hour['humidity']}</td>`
-            pressureHTML = pressureHTML + `<td>${hour['pressure']}</td>`
-            windspeedHTML = windspeedHTML + `<td>${hour['windspeedKmph']}</td>`
-            windDirectionHTML = windDirectionHTML + `<td>${hour['winddirDegree']}<i class='fas fa-arrow-up' style="transform: rotate(${hour['winddirDegree']}deg)"></i></td>`
-            swellDirectionTHTML = swellDirectionTHTML + `<td>${hour['swellDir']}<i class='fas fa-arrow-up' style="transform: rotate(${hour['swellDir']}deg)"></i></td>`
-            swellPeriodTHTML = swellPeriodTHTML + `<td>${hour['swellPeriod_secs']}</td>`
-            swellHeightTHTML = swellHeightTHTML + `<td>${hour['swellHeight_m']}</td>`
-            swHeightHTML = swHeightHTML + `<td>${hour['sigHeight_m']}</td>`
-
-        }
-
-
-        document.getElementById("weather_row").innerHTML = weatherHtml
-        document.getElementById("temperature_row").innerHTML = temperatureHTML
-        document.getElementById("humidity_row").innerHTML = humidityHTML
-        document.getElementById("pressure_row").innerHTML = pressureHTML
-        document.getElementById("windspeed_row").innerHTML = windspeedHTML
-        document.getElementById("winddirection_row").innerHTML = windDirectionHTML
-        document.getElementById("swelldirection_row").innerHTML = swellDirectionTHTML
-        document.getElementById("swellperiod_row").innerHTML = swellPeriodTHTML
-        document.getElementById("swellheight_row").innerHTML = swellHeightTHTML
-        document.getElementById("swheight_row").innerHTML = swHeightHTML
 
         function forecastTable() {
             var weatherHtml = `<th scope="row">Weather</th>`;

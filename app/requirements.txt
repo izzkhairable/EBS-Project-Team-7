@@ -3,3 +3,6 @@ configparser
 redis
 imgurpython
 flask
+numpy
+imutils
+opencv-python

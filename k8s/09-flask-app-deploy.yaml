@@ -88,3 +88,6 @@ data:
 
     [worldweatheronline]
     apiKey = 16293d33ab954ad0ae1193626211710
+
+    [ipCam]
+    ipCamUrl = http://222.164.109.140:666/image.jpg

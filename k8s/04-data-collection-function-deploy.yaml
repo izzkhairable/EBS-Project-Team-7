@@ -1,0 +1,153 @@
+
+# Serverless function to retrieve IoT data and store it in Redis
+apiVersion: serverless.kyma-project.io/v1alpha1
+kind: Function
+metadata:
+  name: beach-monitoring-system-data-collection-function # Change here for your name!
+spec:
+  deps: "requests==2.26.0\r\nredis==3.5.3"
+  env:
+  - name: REDISDBNO 
+    value: "0" #Set the redis db number within your team (0-15)
+  - name: REDISHOST
+    value: redis
+  - name: REDISPORT
+    value: "6379"
+  - name: REDISPASSWORD
+    value: kPppOZp2hC
+  - name: IOTTHINGURL
+    value: https://appiot-mds.cfapps.eu10.hana.ondemand.com/Things('
+  - name: IOTTENANT
+    value: "1954515505"
+  - name: IOTMGMTURL
+    value: https://a4042ecf-281e-4d4a-b721-c9b43461e188.eu10.cp.iot.sap/a4042ecf-281e-4d4a-b721-c9b43461e188/iot/core/api/v1/tenant/
+  - name: IOTUSER
+    value: iot-thing-user
+  - name: IOTPASSWORD
+    value: SAPArm#01
+  - name: CLIENTSECRET
+    value: MqgvE0uZhB63HC4xtZtl5ifvS+8=
+  - name: CLIENTID
+    value: sb-32564232-426c-4b44-842d-1beed50a9c45!b102169|iotae_service!b5
+  - name: PYTHONUNBUFFERED
+    value: "TRUE"
+  - name: AUTHENTICATIONURL
+    value: https://smu-iot.authentication.eu10.hana.ondemand.com/oauth/token
+  maxReplicas: 1
+  minReplicas: 1
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  runtime: python38
+  source: | 
+              import os
+              import redis
+              import json
+              import requests
+              import datetime
+              from requests.auth import HTTPBasicAuth
+
+
+              def getBearerToken(authUrl, clientId, clientSecret):
+                  callUrl = authUrl
+                  request_body = {'grant_type': 'client_credentials', 'response_type': 'token',
+                                  'client_id': clientId, 'client_secret': clientSecret}
+                  response = requests.post(callUrl, data=request_body)
+                  print("Bearer token request status from server: " + str(response.status_code))
+                  data = json.loads(response.text)
+                  bToken = data["access_token"]
+                  return bToken
+
+              def getThingData(iotThingUrl, bToken, thingId):
+                  print("ThingID: " + thingId)
+                  callUrl = iotThingUrl + thingId + "')"
+                  headers = {'Authorization': 'Bearer ' + bToken}
+                  response = requests.get(callUrl, headers=headers)
+                  print("Thing data request status from server: " + str(response.status_code))
+                  data = json.loads(response.text)
+                  asg = data['_assignment']
+                  device = asg['_devices']
+                  for i in device:
+                      deviceId = i['_id']
+                      for j in i['_sensors']:
+                          sensorId = j['_id']
+                          sensorTypeId = j['_sensorTypeId']
+                  return (deviceId, sensorId, sensorTypeId)
+
+              def getThingCapabilities(iotUrl, iotUser, iotPassword, iotTenant, sensorType):
+                  callUrl = iotUrl + iotTenant + "/sensorTypes/" + sensorType
+                  response = requests.get(callUrl, auth=HTTPBasicAuth(iotUser, iotPassword))
+                  print("Capabilities request status from server: " + str(response.status_code))
+                  data = json.loads(response.text)
+                  capabilityList = data["capabilities"]
+                  commandCapabilityId = ""
+                  for capability in data["capabilities"]:
+                      if capability["type"] == "command":
+                          commandCapabilityId = capability["id"]
+                  return commandCapabilityId
+
+              def main(event, context):
+                  clientSecret = os.getenv('CLIENTSECRET')
+                  clientId = os.environ.get('CLIENTID')
+                  authUrl = os.environ.get('AUTHENTICATIONURL')
+                  iotUrl = os.environ.get('IOTMGMTURL')
+                  iotUser = os.environ.get('IOTUSER')
+                  iotPassword = os.environ.get('IOTPASSWORD')
+                  iotTenant = os.environ.get('IOTTENANT')
+                  iotThingUrl = os.environ.get('IOTTHINGURL')
+                  redisHost = os.environ.get('REDISHOST')
+                  redisPort = os.environ.get('REDISPORT')
+                  redisPassword = os.environ.get('REDISPASSWORD')
+                  redisDb = os.environ.get('REDISDBNO')
+                  r = redis.Redis(host=redisHost, port=redisPort, db=int(redisDb), password=redisPassword, socket_timeout=None, decode_responses=True)
+                  thingId = event["data"]["thingID"]
+                  thingLatitude = event["data"]["thingLatitude"]
+                  thingLongitude = event["data"]["thingLongitude"]
+                  thingZone = event["data"]["thingZone"]
+                  bearerToken = getBearerToken(authUrl, clientId, clientSecret)
+                  (deviceId, sensorId, sensorTypeId) = getThingData(iotThingUrl, bearerToken, thingId)
+                  commandCapabilityId = getThingCapabilities(iotUrl, iotUser, iotPassword, iotTenant, sensorTypeId)
+                  
+                  ambientTemperature = str(event["data"]["ambientTemperature"])
+                  ambientPressure = str(event["data"]["ambientPressure"])
+                  ambientLight = str(event["data"]["ambientLight"])
+                  ambientHumidity = str(event["data"]["ambientHumidity"])
+                  gyroscopeX = str(event["data"]["gyroscopeX"])
+                  gyroscopeY = str(event["data"]["gyroscopeY"])
+                  gyroscopeZ = str(event["data"]["gyroscopeZ"])
+                  
+                  #Check if the Thing ID already stored in Redis
+                  dataset = {"thingId": thingId, "deviceId": deviceId, "sensorId": sensorId, "commandCapabilityId": commandCapabilityId, "coordinate": {"lat": thingLatitude, "lng": thingLongitude}, "zone": thingZone}
+                  deviceFound = 0
+                  for device in r.lrange('devices', 0, -1):
+                      device = json.loads(device)
+                      if device['thingId'] == thingId:
+                          deviceFound = deviceFound + 1
+                  if deviceFound == 0: #If the ThingID along with the Thing Data are not found in Redis, we push it to Redis.
+                      r.rpush('devices', json.dumps(dataset))
+                  else: #If the ThingID along with the Thing Data are already found in Redis, we check if any of the Thing properties has changed, such as the coordinate, sensorID, etc.. 
+                      for ind in range(len(r.lrange('devices', 0, -1))):
+                          device = json.loads(r.lrange('devices', 0, -1)[ind])
+                          if device['thingId'] == thingId: #If the ThingID has some properties changed such as the coordinate, SensorID etc.. we delete the ThingID from Redis and add again (to update the ThingID and the properties)
+                              if device != dataset:
+                                  r.lrem('devices', 1, r.lrange('devices', 0, -1)[ind])
+                                  r.rpush('devices', json.dumps(dataset))
+
+                  #### Storing Data Here ####
+                  dataCollectionKey = thingId + 'DATACOLLECTION'
+                  if len(r.lrange(dataCollectionKey, -1, -1)) == 1: 
+                      prev_date = datetime.datetime.strptime(json.loads(r.lrange(dataCollectionKey, -1, -1)[0])['datetime'], '%Y-%m-%d %H:%M:%S.%f')
+                      min_diff = (datetime.datetime.now() - prev_date).total_seconds()/60
+                      if min_diff >= 1:  # If the most recent event was logged more than 1 minutes ago, we log again. If not, don't.
+                          r.rpush(dataCollectionKey, '{"datetime": "' + str(datetime.datetime.now()) + '", "zone": "' + thingZone + '", "ambientTemperature": ' + ambientTemperature + ', "ambientPressure": ' 
+                                  + ambientPressure + ', "ambientLight": ' + ambientLight + ', "ambientHumidity": ' + ambientHumidity + ', "gyroscopeX": ' + gyroscopeX
+                                  + ', "gyroscopeY": ' + gyroscopeY + ', "gyroscopeZ": ' + gyroscopeZ + '}')
+                  else: #If no event is found for the ThingID, it means it's our first time logging, so just ahead and log right away
+                      r.rpush(dataCollectionKey, '{"datetime": "' + str(datetime.datetime.now()) + '", "zone": "' + thingZone + '", "ambientTemperature": ' + ambientTemperature + ', "ambientPressure": ' 
+                              + ambientPressure + ', "ambientLight": ' + ambientLight + ', "ambientHumidity": ' + ambientHumidity + ', "gyroscopeX": ' + gyroscopeX
+                              + ', "gyroscopeY": ' + gyroscopeY + ', "gyroscopeZ": ' + gyroscopeZ + '}')
+                                

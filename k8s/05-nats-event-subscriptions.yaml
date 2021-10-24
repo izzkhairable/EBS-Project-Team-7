@@ -17,6 +17,26 @@ spec:
   protocol: ""
   protocolsettings: {}
   sink: http://beach-monitoring-system-strong-wave-function.smu-team07.svc.cluster.local # Adjust to your function name and namespace!
+---
+# This event subscription deals with low moisture information
+apiVersion: eventing.kyma-project.io/v1alpha1
+kind: Subscription
+metadata:
+  name: beach-monitoring-system-data-collection-subscription  # Change to your name!
+spec:
+  filter:
+    filters:
+    - eventSource:
+        property: source
+        type: exact
+        value: ""
+      eventType:
+        property: type
+        type: exact
+        value: sap.kyma.custom.beachmonitoringsystem.iot.datacollection.v1 # Make sure it matches with your action in SAP IoT Application!
+  protocol: ""
+  protocolsettings: {}
+  sink: http://beach-monitoring-system-data-collection-function.smu-team07.svc.cluster.local # Adjust to your function name and namespace!
 # ---  
 # # This event subscription deals with fetching the thing data
 # apiVersion: eventing.kyma-project.io/v1alpha1

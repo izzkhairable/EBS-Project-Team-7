@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: beach-human-counter-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: beach-human-counter-controller
+  template:
+    metadata:
+      labels:
+        app: beach-human-counter-controller
+        version: v1
+    spec:
+      containers:
+      - name: beach-human-counter-controller
+        image: darrenho1994/beach-human-counter-controller:latest 
+        imagePullPolicy: Always
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+          requests:
+            memory: 32Mi
+        volumeMounts:
+        - mountPath: /code/config
+          name: beach-human-counter-controller-config-configmap 
+      volumes:
+      - name: beach-human-counter-controller-config-configmap
+        configMap: 
+          name: beach-human-counter-controller-configfile
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: beach-human-counter-controller-configfile
+data:
+  human_counter_controller.cfg: |
+    # This file contains all settings for the irrigation control
+
+    [redis]
+    redisHost = redis
+    redisPort = 6379
+    redisPassword = kPppOZp2hC
+    redisDb = 0
+
+    [sapiot]
+    commandUrl = https://a4042ecf-281e-4d4a-b721-c9b43461e188.eu10.cp.iot.sap/a4042ecf-281e-4d4a-b721-c9b43461e188/iot/core/api/v1/tenant/1954515505/devices/
+    iotUser = iot-thing-user # Common user, you can keep it!
+    iotPassword = 'SAPArm#01'
+
+    [ipCam]
+    ipCamUrl = http://222.164.109.140:666/image.jpg

@@ -11,7 +11,7 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 # copy the content of the local src directory to the working directory
-COPY event_controller.py .
+COPY led_controller.py .
 
 # command to run on container start
-CMD [ "python", "./event_controller.py" ]
+CMD [ "python", "./led_controller.py" ]
