@@ -149,7 +149,7 @@ function initMap() {
         }
     
         const contentString =`
-        <p>Location: ${thing.zone}</p>
+        <p class="map-marker-selected">Location: ${thing.zone}</p>
         <p class="${thing.status=='online'&&'text-success'|| 'text-danger'}">Device Status: ${thing.status}</p>`
         const marker =new google.maps.Marker({
             position: {lat:Number(thing.coordinate.lat), lng:Number(thing.coordinate.lng)},
@@ -167,6 +167,13 @@ function initMap() {
             map,
             shouldFocus: false,
         });
+            setTimeout(() => {   
+            length=document.getElementsByClassName("map-marker-selected").length
+            selected_zone=document.getElementsByClassName("map-marker-selected")[length-1].innerText
+            display_alerts_log(selected_zone.replace("Location: ",""))
+            document.getElementById("select_zone").value=selected_zone.replace("Location: ","")
+            }, 500)
+
         });
     }
   }
