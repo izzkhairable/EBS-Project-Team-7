@@ -7,9 +7,9 @@
 #### 2) Flask Application for Kyma Pods
 
 
-docker build -t darrenho1994/bms-flask:latest -f Dockerfile .
+docker build -t darrenho1994/beach-monitoring-system-flask-app:latest -f Dockerfile .
 
-docker push darrenho1994/bms-flask
+docker push darrenho1994/beach-monitoring-system-flask-app
 
 kubectl config set-context --current --namespace=smu-team07 
 
@@ -17,7 +17,7 @@ kubectl apply -f ./deployment.yaml
 
 
 How to access pod files:
-1. kubectl exec --stdin --tty redis-86dc9b4958-6n9h5 -- /bin/bash 
+1. kubectl exec --stdin --tty redis-9f99b7fd6-vh588	 -- /bin/bash 
 
 2. type redis-cli
 

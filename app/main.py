@@ -9,6 +9,7 @@ import datetime
 import imutils
 import numpy as np
 import os
+from requests.auth import HTTPBasicAuth
 from urllib.request import urlopen
 
 #https://data-flair.training/blogs/python-project-real-time-human-detection-counting/
@@ -64,6 +65,7 @@ client_secret = config.get("imgur", "client_secret")
 access_token = config.get("imgur", "access_token")
 refresh_token = config.get("imgur", "refresh_token")
 client = ImgurClient(client_id, client_secret, access_token, refresh_token)
+imgur_username = config.get("imgur", "imgur_username")
 
 #[ipCam]
 ipCamUrl = config.get("ipCam", "ipCamUrl")
@@ -72,105 +74,75 @@ ipCamUrl = config.get("ipCam", "ipCamUrl")
 apiKey = config.get("worldweatheronline", "apiKey")
 
 
+# ipCamUrl = 'https://imagesvc.meredithcorp.io/v3/mm/image?url=https%3A%2F%2Fstatic.onecms.io%2Fwp-content%2Fuploads%2Fsites%2F38%2F2014%2F11%2F12220214%2Fshutterstock_159281780.jpg'
+# # ipCamUrl = 'http://222.164.109.140:666/image.jpg'
 # redisHost = 'localhost'
 # redisPort = '6379'
 # redisPassword = ''
 # redisDb = 0
 # r = redis.Redis(host=redisHost, port=redisPort, db=int(redisDb), password=redisPassword, socket_timeout=None, decode_responses=True)
-# r.flushall()
 
-client_id = '3ef4beacee8d63c'
-client_secret = '75640200bd814140c1e10fe3bd95ed65e9dd490d'
-access_token = '8a06c8a86ac3ef93546cff4ea2cb42956cd60cf4'
-refresh_token = '7e64f091f020ffc5486e9b6f8f97ce9b8ed2ad6e'
-client = ImgurClient(client_id, client_secret, access_token, refresh_token)
+# client_id = '3ef4beacee8d63c'
+# client_secret = '75640200bd814140c1e10fe3bd95ed65e9dd490d'
+# access_token = '8a06c8a86ac3ef93546cff4ea2cb42956cd60cf4'
+# refresh_token = '7e64f091f020ffc5486e9b6f8f97ce9b8ed2ad6e'
+# client = ImgurClient(client_id, client_secret, access_token, refresh_token)
+# imgur_username = 'Darkdrium'
 
-apiKey = '16293d33ab954ad0ae1193626211710'
+# apiKey = '16293d33ab954ad0ae1193626211710'
 
 @app.route("/", methods=["GET"])
 def main():
-    # redisHost = 'redis'
-    # redisPort = '6379'
-    # redisPassword = 'kPppOZp2hC'
-    # redisDb = 5
-
-    redisHost = "localhost"
-    redisPort = "6379"
-    redisPassword = ""
-    redisDb = 0
-
-    r = redis.Redis(
-        host=redisHost,
-        port=redisPort,
-        db=int(redisDb),
-        password=redisPassword,
-        socket_timeout=None,
-        decode_responses=True,
-    )
-    r.flushall()
-
-    r.lpush(
-        "things-data",
-        """{
-    "thingId": "38ED5BF550EE4CC6AD2BE9A7BE7111A4", 
-    "deviceId": "dcac5d23-cf60-44ff-82e8-b1fb4fd69efb", 
-    "sensorId": "f1ff9a46-86f7-47ef-befb-ccb8a76b90a8", 
-    "commandCapabilityId": "24c65333-6630-46d2-b4b8-69ca3f3786df", 
-    "coordinate": {"lat":"1.3050856285437102", "lng":"103.93210128266621"},
-    "zone":"East Coast Park Zone 1",
-    "status":"online"
-    }""",
-    )
-
-    r.lpush(
-        "things-data",
-        """{
-    "thingId": "38ED5BF550EE4CC6AD2BE9A7BE7111A4", 
-    "deviceId": "dcac5d23-cf60-44ff-82e8-b1fb4fd69efb", 
-    "sensorId": "f1ff9a46-86f7-47ef-befb-ccb8a76b90a8", 
-    "commandCapabilityId": "24c65333-6630-46d2-b4b8-69ca3f3786df", 
-    "coordinate": {"lat":"1.3883761", "lng":"103.9787106"},
-    "zone":"Changi Beach Zone 1",
-    "status":"offline"
-    }""",
-    )
-
-    r.lpush(
-        "alerts-data",
-        '{"event": "strong_wave", "datetime": "2021-10-12T22:02:29.735563Z", "zone":"East Coast Park Zone 1"}',
-    )
-
-    r.lpush(
-        "alerts-data",
-        '{"event": "wet_device", "datetime": "2021-10-12T21:02:29.735563Z", "zone":"East Coast Park Zone 1"}',
-    )
-
-    r.lpush(
-        "alerts-data",
-        '{"event": "strong_wave", "datetime": "2021-10-13T20:02:29.735563Z", "zone":"Changi Beach Zone 1"}',
-    )
-
-    list_things_json_strings = r.lrange("things-data", 0, -1)
     things_data_list_dict = []
-    for json_string in list_things_json_strings:
-        things_data_list_dict.append(json.loads(json_string))
-
-    list_alerts_json_strings = r.lrange("alerts-data", 0, -1)
     events_data_list_dict = []
-    for json_string in list_alerts_json_strings:
-        events_data_list_dict.append(json.loads(json_string))
+    for thing in r.lrange('devices', 0, -1):
+        thingJSON = json.loads(thing)
+        commandUrl = 'https://a4042ecf-281e-4d4a-b721-c9b43461e188.eu10.cp.iot.sap/a4042ecf-281e-4d4a-b721-c9b43461e188/iot/core/api/v1/tenant/1954515505/devices/' + thingJSON['deviceId']
+        req = requests.get(commandUrl, auth=HTTPBasicAuth('smu-team07', 'smuArmSAP#2021'))
+        onlineStatus = False
+        if req.status_code == 200:
+            onlineStatus = json.loads(req.text)['online']
+        status = ""
+        if onlineStatus == False:
+            status = "offline"
+        else:
+            status = "online"
+        things_data_list_dict.append(
+            {
+                "thingId": thingJSON["thingId"],
+                "deviceId": thingJSON["deviceId"],
+                "sensorId": thingJSON["sensorId"],
+                "commandCapabilityId": thingJSON["commandCapabilityId"],
+                "coordinate": {
+                    "lat": thingJSON["coordinate"]["lat"],
+                    "lng": thingJSON["coordinate"]["lng"]
+                },
+                "zone": thingJSON["zone"],
+                "status": status
+            }
+        )
+        if len(r.lrange(thingJSON["thingId"], 0, -1)) > 0:
+            for event in r.lrange(thingJSON["thingId"], 0, -1)[::-1]:
+                eventJSON = json.loads(event)
+                events_data_list_dict.append(
+                    {
+                        "event": eventJSON["event"],
+                        "datetime": eventJSON["datetime"],
+                        "zone": eventJSON["zone"]
+                    }
+                )
 
     return render_template(
         "homepage.html",
-        things_data=things_data_list_dict,
-        events_data=events_data_list_dict,
+        # things_data=things_data_list_dict,
+        # events_data=events_data_list_dict,
         things_data_json=json.dumps(things_data_list_dict),
         events_data_json=json.dumps(events_data_list_dict),
     )
 
 @app.route("/dashboard")
 def dashboard():
-    items = client.get_account_images('Darkdrium', page=0)
+    items = client.get_account_images(imgur_username, page=0)
     item_list = ''
     for item in items:
         curr_item = '{"link": "' + item.link + '", "title": "' + item.title + '"}'
@@ -2964,27 +2936,136 @@ def dashboard():
     
     HOGCV = cv2.HOGDescriptor()
     HOGCV.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
-
-
-    # count = humanDetector("http://222.164.109.140:666/image.jpg")
     count = humanDetector(ipCamUrl)
-
-
-    ########DONT PUSH THIS TO PRODUCTION#######
-    # r.rpush("devices", "{\"thingId\": \"38ED5BF550EE4CC6AD2BE9A7BE7111A4\", \"deviceId\": \"dcac5d23-cf60-44ff-82e8-b1fb4fd69efb\", \"sensorId\": \"f1ff9a46-86f7-47ef-befb-ccb8a76b90a8\", \"commandCapabilityId\": \"24c65333-6630-46d2-b4b8-69ca3f3786df\", \"coordinate\": {\"lat\": \"1.3050856285437102\", \"lng\": \"103.93210128266621\"}, \"zone\": \"East Coast Park Zone 1\"}")
-    # r.rpush("38ED5BF550EE4CC6AD2BE9A7BE7111A4DATACOLLECTION", "{\"datetime\": \"2021-10-23 18:11:12.808428\", \"zone\": \"East Coast Park Zone 1\", \"ambientTemperature\": 21.0, \"ambientPressure\": 101.0, \"ambientLight\": 252, \"ambientHumidity\": 59, \"gyroscopeX\": 1.0, \"gyroscopeY\": -3.0, \"gyroscopeZ\": -1.0}")
-    # r.rpush("38ED5BF550EE4CC6AD2BE9A7BE7111A4DATACOLLECTION", "{\"datetime\": \"2021-10-23 18:12:17.172217\", \"zone\": \"East Coast Park Zone 1\", \"ambientTemperature\": 23.0, \"ambientPressure\": 101.0, \"ambientLight\": 252, \"ambientHumidity\": 58, \"gyroscopeX\": 1.0, \"gyroscopeY\": -3.0, \"gyroscopeZ\": -1.0}")
-    # r.rpush("38ED5BF550EE4CC6AD2BE9A7BE7111A4DATACOLLECTION", "{\"datetime\": \"2021-10-23 18:13:17.829322\", \"zone\": \"East Coast Park Zone 1\", \"ambientTemperature\": 24.0, \"ambientPressure\": 101.0, \"ambientLight\": 0, \"ambientHumidity\": 58, \"gyroscopeX\": 1.0, \"gyroscopeY\": -3.0, \"gyroscopeZ\": -1.0}")
-    ########DONT PUSH THIS TO PRODUCTION#######
-
     latest_sensor_data = ''
-    if len(r.lrange("38ED5BF550EE4CC6AD2BE9A7BE7111A4DATACOLLECTION", -1, -1)) > 0:
+    daily_sensor_list = ''
+    monthly_sensor_list = ''
+
+    if len(r.lrange("38ED5BF550EE4CC6AD2BE9A7BE7111A4DATACOLLECTION", 0, -1)) > 0:
         latest_sensor_data = json.loads(r.lrange("38ED5BF550EE4CC6AD2BE9A7BE7111A4DATACOLLECTION", -1, -1)[0]) 
-    
-    outcome = ''
+        dailySensorList = r.lrange('38ED5BF550EE4CC6AD2BE9A7BE7111A4DATACOLLECTION', 0, -1)[::-1]
+        total_temperature_for_current_day = 0
+        total_humidity_for_current_day = 0
+        total_pressure_for_current_day = 0
+        total_intensity_for_current_day = 0
+        total_no_of_data_for_current_day = 0
+        total_temperature_for_current_month = 0
+        total_humidity_for_current_month = 0
+        total_pressure_for_current_month = 0
+        total_intensity_for_current_month = 0
+        total_no_of_data_for_current_month = 0
+
+        for index in range(0, len(dailySensorList)):
+            jsonobj = json.loads(dailySensorList[index])
+            eventdate = datetime.datetime.strptime(jsonobj["datetime"], '%Y-%m-%d %H:%M:%S.%f')
+            eventyear = eventdate.year
+            eventmonth = eventdate.month
+            eventday = eventdate.day
+            previousjsonobj = json.loads(dailySensorList[index-1])
+            previouseventdate = datetime.datetime.strptime(previousjsonobj["datetime"], '%Y-%m-%d %H:%M:%S.%f')
+
+            if index > 0 and index < len(dailySensorList)-1: #if we between 2nd to 2nd last item
+                if (eventyear == previouseventdate.year and eventmonth == previouseventdate.month):
+                    total_temperature_for_current_month+=jsonobj['ambientTemperature']
+                    total_humidity_for_current_month+=jsonobj['ambientHumidity']
+                    total_pressure_for_current_month+=jsonobj['ambientPressure']
+                    total_intensity_for_current_month+=jsonobj['ambientLight']
+                    total_no_of_data_for_current_month+=1
+                    if eventday == previouseventdate.day:
+                        total_temperature_for_current_day+=jsonobj['ambientTemperature']
+                        total_humidity_for_current_day+=jsonobj['ambientHumidity']
+                        total_pressure_for_current_day+=jsonobj['ambientPressure']
+                        total_intensity_for_current_day+=jsonobj['ambientLight']
+
+                        total_no_of_data_for_current_day+=1
+                    else:
+                        daily_sensor_list+=json.dumps({"date": str(previouseventdate), "ambientTemperature": total_temperature_for_current_day/total_no_of_data_for_current_day, "ambientHumidity": total_humidity_for_current_day/total_no_of_data_for_current_day, "ambientPressure": total_pressure_for_current_day/total_no_of_data_for_current_day, "ambientLight": total_intensity_for_current_day/total_no_of_data_for_current_day}) + '|'
+                        total_temperature_for_current_day = jsonobj['ambientTemperature']
+                        total_humidity_for_current_day = jsonobj['ambientHumidity']
+                        total_pressure_for_current_day = jsonobj['ambientPressure']
+                        total_intensity_for_current_day = jsonobj['ambientLight']
+
+                        total_no_of_data_for_current_day = 1
+                else:
+                    daily_sensor_list+=json.dumps({"date": str(previouseventdate), "ambientTemperature": total_temperature_for_current_day/total_no_of_data_for_current_day, "ambientHumidity": total_humidity_for_current_day/total_no_of_data_for_current_day, "ambientPressure": total_pressure_for_current_day/total_no_of_data_for_current_day, "ambientLight": total_intensity_for_current_day/total_no_of_data_for_current_day}) + '|'
+                    total_temperature_for_current_day = jsonobj['ambientTemperature']
+                    total_humidity_for_current_day = jsonobj['ambientHumidity']
+                    total_pressure_for_current_day = jsonobj['ambientPressure']
+                    total_intensity_for_current_day = jsonobj['ambientLight']
+
+                    total_no_of_data_for_current_day = 1
+                    monthly_sensor_list+=json.dumps({"date": str(previouseventdate), "ambientTemperature": total_temperature_for_current_month/total_no_of_data_for_current_month, "ambientHumidity": total_humidity_for_current_day/total_no_of_data_for_current_month, "ambientPressure": total_pressure_for_current_day/total_no_of_data_for_current_month, "ambientLight": total_intensity_for_current_day/total_no_of_data_for_current_month}) + '|'
+                    total_temperature_for_current_month = jsonobj['ambientTemperature']
+                    total_humidity_for_current_month = jsonobj['ambientHumidity']
+                    total_pressure_for_current_month = jsonobj['ambientPressure']
+                    total_intensity_for_current_month = jsonobj['ambientLight']
+
+                    total_no_of_data_for_current_month = 1
+            elif index == len(dailySensorList)-1: #if we are at the last item
+                if (eventyear == previouseventdate.year and eventmonth == previouseventdate.month):
+                    total_temperature_for_current_month+=jsonobj['ambientTemperature']
+                    total_humidity_for_current_month+=jsonobj['ambientHumidity']
+                    total_pressure_for_current_month+=jsonobj['ambientPressure']
+                    total_intensity_for_current_month+=jsonobj['ambientLight']
+
+                    total_no_of_data_for_current_month+=1
+                    monthly_sensor_list+=json.dumps({"date": str(eventdate), "ambientTemperature": total_temperature_for_current_month/total_no_of_data_for_current_month, "ambientHumidity": total_humidity_for_current_day/total_no_of_data_for_current_month, "ambientPressure": total_pressure_for_current_day/total_no_of_data_for_current_month, "ambientLight": total_intensity_for_current_day/total_no_of_data_for_current_month}) + '|'
+
+                    if eventday == previouseventdate.day:
+                        total_temperature_for_current_day+=jsonobj['ambientTemperature']
+                        total_humidity_for_current_day+= jsonobj['ambientHumidity']
+                        total_pressure_for_current_day+= jsonobj['ambientPressure']
+                        total_intensity_for_current_day+= jsonobj['ambientLight']
+                        total_no_of_data_for_current_day+=1
+                        daily_sensor_list+=json.dumps({"date": str(eventdate), "ambientTemperature": total_temperature_for_current_day/total_no_of_data_for_current_day, "ambientHumidity": total_humidity_for_current_day/total_no_of_data_for_current_day, "ambientPressure": total_pressure_for_current_day/total_no_of_data_for_current_day, "ambientLight": total_intensity_for_current_day/total_no_of_data_for_current_day}) + '|'
+                    else:
+                        daily_sensor_list+=json.dumps({"date": str(previouseventdate), "ambientTemperature": total_temperature_for_current_day/total_no_of_data_for_current_day, "ambientHumidity": total_humidity_for_current_day/total_no_of_data_for_current_day, "ambientPressure": total_pressure_for_current_day/total_no_of_data_for_current_day, "ambientLight": total_intensity_for_current_day/total_no_of_data_for_current_day}) + '|'
+                        total_temperature_for_current_day = jsonobj['ambientTemperature']
+                        total_humidity_for_current_day = jsonobj['ambientHumidity']
+                        total_pressure_for_current_day = jsonobj['ambientPressure']
+                        total_intensity_for_current_day = jsonobj['ambientLight']
+                        total_no_of_data_for_current_day = 1
+                        daily_sensor_list+=json.dumps({"date": str(eventdate), "ambientTemperature": total_temperature_for_current_day/total_no_of_data_for_current_day, "ambientHumidity": total_humidity_for_current_day/total_no_of_data_for_current_day, "ambientPressure": total_pressure_for_current_day/total_no_of_data_for_current_day, "ambientLight": total_intensity_for_current_day/total_no_of_data_for_current_day}) + '|'
+                else:
+                    daily_sensor_list+=json.dumps({"date": str(previouseventdate), "ambientTemperature": total_temperature_for_current_day/total_no_of_data_for_current_day, "ambientHumidity": total_humidity_for_current_day/total_no_of_data_for_current_day, "ambientPressure": total_pressure_for_current_day/total_no_of_data_for_current_day, "ambientLight": total_intensity_for_current_day/total_no_of_data_for_current_day}) + '|'
+                    total_temperature_for_current_day = jsonobj['ambientTemperature']
+                    total_humidity_for_current_day = jsonobj['ambientHumidity']
+                    total_pressure_for_current_day = jsonobj['ambientPressure']
+                    total_intensity_for_current_day = jsonobj['ambientLight']
+                    total_no_of_data_for_current_day = 1
+                    daily_sensor_list+=json.dumps({"date": str(eventdate), "ambientTemperature": total_temperature_for_current_day/total_no_of_data_for_current_day, "ambientHumidity": total_humidity_for_current_day/total_no_of_data_for_current_day, "ambientPressure": total_pressure_for_current_day/total_no_of_data_for_current_day, "ambientLight": total_intensity_for_current_day/total_no_of_data_for_current_day}) + '|'
+                    monthly_sensor_list+=json.dumps({"date": str(previouseventdate), "ambientTemperature": total_temperature_for_current_month/total_no_of_data_for_current_month, "ambientHumidity": total_humidity_for_current_day/total_no_of_data_for_current_month, "ambientPressure": total_pressure_for_current_day/total_no_of_data_for_current_month, "ambientLight": total_intensity_for_current_day/total_no_of_data_for_current_month}) + '|'
+                    total_temperature_for_current_month = jsonobj['ambientTemperature']
+                    total_humidity_for_current_month = jsonobj['ambientHumidity']
+                    total_pressure_for_current_month = jsonobj['ambientPressure']
+                    total_intensity_for_current_month = jsonobj['ambientLight']
+
+                    total_no_of_data_for_current_month = 1
+                    monthly_sensor_list+=json.dumps({"date": str(eventdate), "ambientTemperature": total_temperature_for_current_month/total_no_of_data_for_current_month, "ambientHumidity": total_humidity_for_current_day/total_no_of_data_for_current_month, "ambientPressure": total_pressure_for_current_day/total_no_of_data_for_current_month, "ambientLight": total_intensity_for_current_day/total_no_of_data_for_current_month}) + '|'
+            elif index == 0: #if we are at the first item
+                total_temperature_for_current_day+=jsonobj['ambientTemperature']
+                total_humidity_for_current_day+= jsonobj['ambientHumidity']
+                total_pressure_for_current_day+= jsonobj['ambientPressure']
+                total_intensity_for_current_day+= jsonobj['ambientLight']
+                total_no_of_data_for_current_day+=1
+                
+                total_temperature_for_current_month+=jsonobj['ambientTemperature']
+                total_humidity_for_current_month+=jsonobj['ambientHumidity']
+                total_pressure_for_current_month+=jsonobj['ambientPressure']
+                total_intensity_for_current_month+=jsonobj['ambientLight']
+                total_no_of_data_for_current_month+=1
+
+
+
+    daily_visitor_history_count = ''
+    monthly_visitor_history_count = ''
     if len(r.lrange('38ED5BF550EE4CC6AD2BE9A7BE7111A4POPULATION', 0, -1)) > 0:
         dailyPopulationList = r.lrange('38ED5BF550EE4CC6AD2BE9A7BE7111A4POPULATION', 0, -1)[::-1]
-        number_of_people_for_current_day = 0
+        total_number_of_people_for_current_day = 0
+        total_no_of_data_for_current_day = 0
+        total_number_of_people_for_current_month = 0
+        total_no_of_data_for_current_month = 0
+
         for index in range(0, len(dailyPopulationList)):
             jsonobj = json.loads(dailyPopulationList[index])
             eventdate = datetime.datetime.strptime(jsonobj["datetime"], '%Y-%m-%d %H:%M:%S.%f')
@@ -2994,22 +3075,54 @@ def dashboard():
             previousjsonobj = json.loads(dailyPopulationList[index-1])
             previouseventdate = datetime.datetime.strptime(previousjsonobj["datetime"], '%Y-%m-%d %H:%M:%S.%f')
 
-            if index > 0 and index < len(dailyPopulationList)-1:
-                if (eventyear == previouseventdate.year and eventmonth == previouseventdate.month and eventday == previouseventdate.day):
-                    number_of_people_for_current_day+=jsonobj['people_count']
+            if index > 0 and index < len(dailyPopulationList)-1: #if we between 2nd to 2nd last item
+                if (eventyear == previouseventdate.year and eventmonth == previouseventdate.month):
+                    total_number_of_people_for_current_month+=jsonobj['people_count']
+                    total_no_of_data_for_current_month+=1
+                    if eventday == previouseventdate.day:
+                        total_number_of_people_for_current_day+=jsonobj['people_count']
+                        total_no_of_data_for_current_day+=1
+                    else:
+                        daily_visitor_history_count+=json.dumps({"date": str(previouseventdate), "count": total_number_of_people_for_current_day/total_no_of_data_for_current_day}) + '|'
+                        total_number_of_people_for_current_day = jsonobj['people_count']
+                        total_no_of_data_for_current_day = 1
                 else:
-                    outcome+= json.dumps({"date": str(previouseventdate), "count": number_of_people_for_current_day}) + "|"
-                    number_of_people_for_current_day = jsonobj['people_count']
-            elif index == len(dailyPopulationList)-1:
-                if (eventyear == previouseventdate.year and eventmonth == previouseventdate.month and eventday == previouseventdate.day):
-                    number_of_people_for_current_day+=jsonobj['people_count']
-                    outcome+= json.dumps({"date": str(eventdate), "count": number_of_people_for_current_day}) + "|"
+                    daily_visitor_history_count+=json.dumps({"date": str(previouseventdate), "count": total_number_of_people_for_current_day/total_no_of_data_for_current_day}) + '|'
+                    total_number_of_people_for_current_day = jsonobj['people_count']
+                    total_no_of_data_for_current_day = 1
+                    monthly_visitor_history_count+=json.dumps({"date": str(previouseventdate), "count": total_number_of_people_for_current_month/total_no_of_data_for_current_month}) + '|'
+                    total_number_of_people_for_current_month = jsonobj['people_count']
+                    total_no_of_data_for_current_month = 1
+            elif index == len(dailyPopulationList)-1: #if we are at the last item
+                if (eventyear == previouseventdate.year and eventmonth == previouseventdate.month):
+                    total_number_of_people_for_current_month+=jsonobj['people_count']
+                    total_no_of_data_for_current_month+=1
+                    monthly_visitor_history_count+=json.dumps({"date": str(eventdate), "count": total_number_of_people_for_current_month/total_no_of_data_for_current_month}) + '|'
+
+                    if eventday == previouseventdate.day:
+                        total_number_of_people_for_current_day+=jsonobj['people_count']
+                        total_no_of_data_for_current_day+=1
+                        daily_visitor_history_count+=json.dumps({"date": str(eventdate), "count": total_number_of_people_for_current_day/total_no_of_data_for_current_day}) + '|'
+                    else:
+                        daily_visitor_history_count+=json.dumps({"date": str(previouseventdate), "count": total_number_of_people_for_current_day/total_no_of_data_for_current_day}) + '|'
+                        total_number_of_people_for_current_day = jsonobj['people_count']
+                        total_no_of_data_for_current_day = 1
+                        daily_visitor_history_count+=json.dumps({"date": str(eventdate), "count": total_number_of_people_for_current_day/total_no_of_data_for_current_day}) + '|'
                 else:
-                    outcome+= json.dumps({"date": str(previouseventdate), "count": number_of_people_for_current_day}) + "|"
-                    number_of_people_for_current_day = jsonobj['people_count']
-                    outcome+= json.dumps({"date": str(eventdate), "count": jsonobj['people_count']}) + "|"
-            elif index == 0:
-                number_of_people_for_current_day+=jsonobj['people_count']
+                    daily_visitor_history_count+=json.dumps({"date": str(previouseventdate), "count": total_number_of_people_for_current_day/total_no_of_data_for_current_day}) + '|'
+                    total_number_of_people_for_current_day = jsonobj['people_count']
+                    total_no_of_data_for_current_day = 1
+                    daily_visitor_history_count+=json.dumps({"date": str(eventdate), "count": total_number_of_people_for_current_day/total_no_of_data_for_current_day}) + '|'
+                    monthly_visitor_history_count+=json.dumps({"date": str(previouseventdate), "count": total_number_of_people_for_current_month/total_no_of_data_for_current_month}) + '|'
+                    total_number_of_people_for_current_month = jsonobj['people_count']
+                    total_no_of_data_for_current_month = 1
+                    monthly_visitor_history_count+=json.dumps({"date": str(eventdate), "count": total_number_of_people_for_current_month/total_no_of_data_for_current_month}) + '|'
+            elif index == 0: #if we are at the first item
+                total_number_of_people_for_current_day+=jsonobj['people_count']
+                total_no_of_data_for_current_day+=1
+                total_number_of_people_for_current_month+=jsonobj['people_count']
+                total_no_of_data_for_current_month+=1
+            
     try:
         response = requests.get(
             ipCamUrl, timeout=10)
@@ -3017,10 +3130,8 @@ def dashboard():
         file.write(response.content)
         file.close()
     except:
-        print(os.path.dirname(os.path.abspath(__file__)))
-        print("hello")
-
-    return render_template("dashboard.html", visitor_history_count=outcome[:-1], people_count=count, data=item_list[:-1], forecast_data=forecast_data, next_day_forecast=json.dumps(json.loads(forecast_data)["data"]["weather"][0]), latest_sensor_data=json.dumps(latest_sensor_data))
+        print("Your ipCamUrl must be down.")
+    return render_template("dashboard.html", daily_sensor_list=daily_sensor_list[:-1], monthly_visitor_history_count=monthly_visitor_history_count[:-1], daily_visitor_history_count=daily_visitor_history_count[:-1], people_count=count, data=item_list[:-1], forecast_data=forecast_data, next_day_forecast=json.dumps(json.loads(forecast_data)["data"]["weather"][0]), latest_sensor_data=json.dumps(latest_sensor_data))
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True)

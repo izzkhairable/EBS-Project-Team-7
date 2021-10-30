@@ -86,18 +86,19 @@
         <div class="page-wrapper">
             <div class="page-breadcrumb bg-white">
                 <div class="row align-items-center">
-                    <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
+                    <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3">
                         <h4 class="page-title">Dashboard</h4>
                     </div>
-                    <div class="col-lg-9 col-sm-8 col-md-8 col-xs-12">
-                        <div class="d-md-flex">
-                            <ol class="breadcrumb ms-auto">
-                                <li><a href="#" class="fw-normal">Dashboard</a></li>
-                            </ol>
-                            <a href="https://www.wrappixel.com/templates/ampleadmin/" target="_blank"
-                                class="btn btn-danger  d-none d-md-block pull-right ms-3 hidden-xs hidden-sm waves-effect waves-light text-white">Upgrade
-                                to Pro</a>
-                        </div>
+                    <div class="col-lg-7 col-md-7 col-sm-7 col-xs-7">
+                    </div>
+
+                    <div class="col-lg-2 col-sm-2 col-md-2 col-xs-2">
+                        <form class="form-horizontal form-material" hidden>
+                            <select id="view_type" class="form-select shadow-none" onchange="renderCharts()">
+                                <option selected value="daily_view">Historical Daily</option>
+                                <option value="monthly_view">Historical Monthly</option>
+                            </select>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -135,8 +136,42 @@
                             </h1>
                         </div>
                     </div>
-
                 </div>
+                <div class="row">
+                    <div class="col-md-3 col-lg-3 col-sm-3 col-xs-3">
+                        <div class="white-box">
+                            <figure class="highcharts-figure">
+                                <div id="containerTemperature"></div>
+                            </figure>
+
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-lg-3 col-sm-3 col-xs-3">
+                        <div class="white-box">
+                            <figure class="highcharts-figure">
+                                <div id="containerHumidity"></div>
+                            </figure>
+
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-lg-3 col-sm-3 col-xs-3">
+                        <div class="white-box">
+                            <figure class="highcharts-figure">
+                                <div id="containerPressure"></div>
+                            </figure>
+
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-lg-3 col-sm-3 col-xs-3">
+                        <div class="white-box">
+                            <figure class="highcharts-figure">
+                                <div id="containerIntensity"></div>
+                            </figure>
+
+                        </div>
+                    </div>
+                </div>
+
                 <div class="row justify-content-center">
                     <!-- <div class="col-md-5 col-lg-5 col-sm-5 col-xs-5">
                         <img class="img-fluid" id="beach_img" src="{{data2}}" />
@@ -166,13 +201,12 @@
 
                                 <div class="row justify-content-center">
                                     <h3 class="text-center">
-                                        Current Visitor Count</h3>
+                                        Current Beach Visitor Count</h3>
                                     <h1 class="text-center">{{people_count}}
                                     </h1>
                                 </div>
                             </div>
                             <div class="white-box">
-
                                 <div class="row justify-content-center">
                                     <figure class="highcharts-figure">
                                         <div id="container"></div>
@@ -235,7 +269,7 @@
                         <tr id="swelldirection_row">
                             <th scope="row">Swell Direction</th>
                         </tr>
-                        <tr id="swellperiod_row">
+                        <!-- <tr id="swellperiod_row">
                             <th scope="row">Swell Period</th>
                         </tr>
                         <tr id="swellheight_row">
@@ -243,7 +277,7 @@
                         </tr>
                         <tr id="swheight_row">
                             <th scope="row">Significant Wave Height (m)</th>
-                        </tr>
+                        </tr> -->
 
                         </tbody>
                         </table>
@@ -260,7 +294,9 @@
         <input type="hidden" id="forecast_data" value="{{forecast_data}}" />
         <input type="hidden" id="next_day_forecast" value="{{next_day_forecast}}" />
         <input type="hidden" id="latest_sensor_data" value="{{latest_sensor_data}}" />
-        <input type="hidden" id="visitor_history_count" value="{{visitor_history_count}}" />
+        <input type="hidden" id="daily_visitor_history_count" value="{{daily_visitor_history_count}}" />
+        <input type="hidden" id="monthly_visitor_history_count" value="{{monthly_visitor_history_count}}" />
+        <input type="hidden" id="daily_sensor_list" value="{{daily_sensor_list}}" />
 
         <footer class="footer text-center"> 2021 © Ample Admin brought to you by <a
                 href="https://www.wrappixel.com/">wrappixel.com</a>
@@ -290,53 +326,246 @@
     <script src="{{url_for('static', filename='jquery/jquery-before-after-slider.js')}}"></script>
     <script src="{{url_for('static', filename='jquery/jquery-before-after-slider-min.js')}}"></script>
     <script>//https://www.highcharts.com/demo/line-labels
+        function isEmptyOrSpaces(str) {
+            return str === null || str.match(/^ *$/) !== null;
+        }
+        renderCharts()
+        function renderCharts() {
+            if (document.getElementById("daily_visitor_history_count").value != '' && document.getElementById("monthly_visitor_history_count").value != '') {
+                dailyVisitorHistoryList = document.getElementById("daily_visitor_history_count").value.split('|')
+                monthlyVisitorHistoryList = document.getElementById("monthly_visitor_history_count").value.split('|')
 
-        if (document.getElementById("visitor_history_count").value != '') {
-            visitor_historyList = document.getElementById("visitor_history_count").value.split('|')
-            seriesList = []
-            categoriesList = []
-            for (day of visitor_historyList) {
-                jsonObj = JSON.parse(day)
-                seriesList.push(jsonObj["count"])
-                categoriesList.push(new Date(jsonObj["date"]).getUTCDate().toString() + "-" + parseInt(new Date(jsonObj["date"]).getMonth()+1).toString() + "-" + new Date(jsonObj["date"]).getFullYear().toString())
-            }
-            seriesList.reverse()
-            categoriesList.reverse()
-            Highcharts.chart('container', {
-                chart: {
-                    type: 'line'
-                },
-                title: {
-                    text: 'Visitor Count (Last 5 Days)'
-                },
-                subtitle: {
-                    text: 'Source: WorldClimate.com'
-                },
-                xAxis: {
-                    categories: categoriesList
-                },
-                yAxis: {
-                    title: {
-                        text: 'No. of Beachgoers',
-                        enabled: false
+                dayOrMonth = ""
+                seriesList = []
+                categoriesList = []
+                if (document.getElementById('view_type').value == "daily_view") {
+                    dayOrMonth = "Days"
+                    for (day of dailyVisitorHistoryList) {
+                        jsonObj = JSON.parse(day)
+                        seriesList.push(Math.floor(jsonObj["count"]))
+                        categoriesList.push(new Date(jsonObj["date"]).getDate().toString() + "-" + parseInt(new Date(jsonObj["date"]).getMonth() + 1).toString() + "-" + new Date(jsonObj["date"]).getFullYear().toString())
                     }
-                },
-                plotOptions: {
-                    line: {
-                        dataLabels: {
-                            enabled: true
-                        },
-                        enableMouseTracking: false
-                    }
-                },
-                series: [{
-                    name: '',
-                    data: seriesList
-                }],
-                legend: {
-                    enabled: false //disable legend https://api.highcharts.com/highcharts/legend
                 }
-            });
+                else if (document.getElementById('view_type').value == "monthly_view") {
+                    dayOrMonth = "Months"
+                    for (month of monthlyVisitorHistoryList) {
+                        jsonObj = JSON.parse(month)
+                        seriesList.push(Math.floor(jsonObj["count"]))
+                        categoriesList.push(parseInt(new Date(jsonObj["date"]).getMonth() + 1).toString() + "-" + new Date(jsonObj["date"]).getFullYear().toString())
+                    }
+
+                }
+                seriesList.reverse()
+                categoriesList.reverse()
+                Highcharts.chart('container', {
+                    chart: {
+                        type: 'line'
+                    },
+                    title: {
+                        text: 'Visitor Count (Last ' + categoriesList.length + ' ' + dayOrMonth + ')'
+                    },
+                    subtitle: {
+                        text: 'Source: WorldClimate.com',
+                    },
+                    xAxis: {
+                        categories: categoriesList
+                    },
+                    yAxis: {
+                        title: {
+                            text: 'No. of Beachgoers',
+                            enabled: false
+                        }
+                    },
+                    plotOptions: {
+                        line: {
+                            dataLabels: {
+                                enabled: true
+                            },
+                            enableMouseTracking: false
+                        }
+                    },
+                    series: [{
+                        name: '',
+                        data: seriesList
+                    }],
+                    legend: {
+                        enabled: false //disable legend https://api.highcharts.com/highcharts/legend
+                    }
+                });
+            }
+
+
+            if (document.getElementById("daily_sensor_list").value != '') {
+                dailySensorList = document.getElementById("daily_sensor_list").value.split('|')
+
+                dayOrMonth = ""
+                temperatureList = []
+                humidityList = []
+                pressureList = []
+                intensityList = []
+                categoriesList = []
+                if (document.getElementById('view_type').value == "daily_view") {
+                    dayOrMonth = "Days"
+                    for (day of dailySensorList) {
+                        jsonObj = JSON.parse(day)
+                        temperatureList.push(Math.floor(jsonObj["ambientTemperature"]))
+                        humidityList.push(Math.floor(jsonObj["ambientHumidity"]))
+                        pressureList.push(Math.floor(jsonObj["ambientPressure"]))
+                        intensityList.push(Math.floor(jsonObj["ambientLight"]))
+
+                        categoriesList.push(new Date(jsonObj["date"]).getDate().toString() + "-" + parseInt(new Date(jsonObj["date"]).getMonth() + 1).toString() + "-" + new Date(jsonObj["date"]).getFullYear().toString())
+                    }
+                }
+                console.log(temperatureList)
+                temperatureList.reverse()
+                categoriesList.reverse()
+                Highcharts.chart('containerTemperature', {
+                    chart: {
+                        type: 'line'
+                    },
+                    title: {
+                        text: 'Average Temperature (Last ' + categoriesList.length + ' ' + dayOrMonth + ')'
+                    },
+                    subtitle: {
+                        text: 'Source: WorldClimate.com'
+                    },
+                    xAxis: {
+                        categories: categoriesList
+                    },
+                    yAxis: {
+                        title: {
+                            text: 'Temperature',
+                            enabled: false
+                        }
+                    },
+                    plotOptions: {
+                        line: {
+                            dataLabels: {
+                                enabled: true
+                            },
+                            enableMouseTracking: false
+                        }
+                    },
+                    series: [{
+                        name: '',
+                        data: temperatureList
+                    }],
+                    legend: {
+                        enabled: false //disable legend https://api.highcharts.com/highcharts/legend
+                    }
+                });
+
+                Highcharts.chart('containerHumidity', {
+                    chart: {
+                        type: 'line'
+                    },
+                    title: {
+                        text: 'Average Humidity (Last ' + categoriesList.length + ' ' + dayOrMonth + ')'
+                    },
+                    subtitle: {
+                        text: 'Source: WorldClimate.com'
+                    },
+                    xAxis: {
+                        categories: categoriesList
+                    },
+                    yAxis: {
+                        title: {
+                            text: 'Humidity',
+                            enabled: false
+                        }
+                    },
+                    plotOptions: {
+                        line: {
+                            dataLabels: {
+                                enabled: true
+                            },
+                            enableMouseTracking: false
+                        }
+                    },
+                    series: [{
+                        name: '',
+                        data: humidityList
+                    }],
+                    legend: {
+                        enabled: false //disable legend https://api.highcharts.com/highcharts/legend
+                    }
+                });
+
+                Highcharts.chart('containerPressure', {
+                    chart: {
+                        type: 'line'
+                    },
+                    title: {
+                        text: 'Average Pressure (Last ' + categoriesList.length + ' ' + dayOrMonth + ')'
+                    },
+                    subtitle: {
+                        text: 'Source: WorldClimate.com'
+                    },
+                    xAxis: {
+                        categories: categoriesList
+                    },
+                    yAxis: {
+                        title: {
+                            text: 'Pressure',
+                            enabled: false
+                        }
+                    },
+                    plotOptions: {
+                        line: {
+                            dataLabels: {
+                                enabled: true
+                            },
+                            enableMouseTracking: false
+                        }
+                    },
+                    series: [{
+                        name: '',
+                        data: pressureList
+                    }],
+                    legend: {
+                        enabled: false //disable legend https://api.highcharts.com/highcharts/legend
+                    }
+                });
+
+                Highcharts.chart('containerIntensity', {
+                    chart: {
+                        type: 'line'
+                    },
+                    title: {
+                        text: 'Average Light Intensity (Last ' + categoriesList.length + ' ' + dayOrMonth + ')'
+                    },
+                    subtitle: {
+                        text: 'Source: WorldClimate.com'
+                    },
+                    xAxis: {
+                        categories: categoriesList
+                    },
+                    yAxis: {
+                        title: {
+                            text: 'Light Intensity',
+                            enabled: false
+                        }
+                    },
+                    plotOptions: {
+                        line: {
+                            dataLabels: {
+                                enabled: true
+                            },
+                            enableMouseTracking: false
+                        }
+                    },
+                    series: [{
+                        name: '',
+                        data: intensityList
+                    }],
+                    legend: {
+                        enabled: false //disable legend https://api.highcharts.com/highcharts/legend
+                    }
+                });
+
+
+            }
+
         }
         latest_sensor_data = JSON.parse(document.getElementById("latest_sensor_data").value)
         document.getElementById("current_temperature").innerText = latest_sensor_data["ambientTemperature"] + " °C"
@@ -347,11 +576,11 @@
         var ddl_image_list = document.getElementById('ddl_image_list').value;
         var image_list = ddl_image_list.split('|')
         var ddl1 = `<option selected value="{{url_for('static', filename='image/image.png')}}">Now</option>`
-        for (image of image_list) {
-            imgjson = JSON.parse(image)
-
-            ddl1 = ddl1 + "<option value=\"" + imgjson['link'] + "\">" + imgjson['title'] + "</option>";
-
+        if (isEmptyOrSpaces(ddl_image_list) == false) {
+            for (image of image_list) {
+                imgjson = JSON.parse(image)
+                ddl1 = ddl1 + "<option value=\"" + imgjson['link'] + "\">" + imgjson['title'] + "</option>";
+            }
         }
         document.getElementById("renderer").innerHTML = ddl1
 
@@ -434,21 +663,21 @@
         var windspeedHTML = `<th scope="row">Wind (km/h)</th>`;
         var windDirectionHTML = `<th scope="row">Wind Direction</th>`;
         var swellDirectionTHTML = `<th scope="row">Swell Direction</th>`;
-        var swellPeriodTHTML = `<th scope="row">Swell Period</th>`;
-        var swellHeightTHTML = `<th scope="row">Swell Height (m)</th>`;
-        var swHeightHTML = `<th scope="row">Significant Wave Height (m)	</th>`;
+        // var swellPeriodTHTML = `<th scope="row">Swell Period</th>`;
+        // var swellHeightTHTML = `<th scope="row">Swell Height (m)</th>`;
+        // var swHeightHTML = `<th scope="row">Significant Wave Height (m)	</th>`;
 
         for (hour of next_day_forecast['hourly']) {
-            weatherHtml = weatherHtml + `<td><img src="${hour['weatherIconUrl'][0]['value']}"/></td>`
+            weatherHtml = weatherHtml + `<td><img src="${hour['weatherIconUrl'][0]['value']}" style="width:36px;height:36px"/></td>`
             temperatureHTML = temperatureHTML + `<td>${hour['tempC']}</td>`
             humidityHTML = humidityHTML + `<td>${hour['humidity']}</td>`
             pressureHTML = pressureHTML + `<td>${hour['pressure']}</td>`
             windspeedHTML = windspeedHTML + `<td>${hour['windspeedKmph']}</td>`
             windDirectionHTML = windDirectionHTML + `<td>${hour['winddirDegree']}<i class='fas fa-arrow-up' style="transform: rotate(${hour['winddirDegree']}deg)"></i></td>`
             swellDirectionTHTML = swellDirectionTHTML + `<td>${hour['swellDir']}<i class='fas fa-arrow-up' style="transform: rotate(${hour['swellDir']}deg)"></i></td>`
-            swellPeriodTHTML = swellPeriodTHTML + `<td>${hour['swellPeriod_secs']}</td>`
-            swellHeightTHTML = swellHeightTHTML + `<td>${hour['swellHeight_m']}</td>`
-            swHeightHTML = swHeightHTML + `<td>${hour['sigHeight_m']}</td>`
+            // swellPeriodTHTML = swellPeriodTHTML + `<td>${hour['swellPeriod_secs']}</td>`
+            // swellHeightTHTML = swellHeightTHTML + `<td>${hour['swellHeight_m']}</td>`
+            // swHeightHTML = swHeightHTML + `<td>${hour['sigHeight_m']}</td>`
 
         }
 
@@ -460,9 +689,9 @@
         document.getElementById("windspeed_row").innerHTML = windspeedHTML
         document.getElementById("winddirection_row").innerHTML = windDirectionHTML
         document.getElementById("swelldirection_row").innerHTML = swellDirectionTHTML
-        document.getElementById("swellperiod_row").innerHTML = swellPeriodTHTML
-        document.getElementById("swellheight_row").innerHTML = swellHeightTHTML
-        document.getElementById("swheight_row").innerHTML = swHeightHTML
+        // document.getElementById("swellperiod_row").innerHTML = swellPeriodTHTML
+        // document.getElementById("swellheight_row").innerHTML = swellHeightTHTML
+        // document.getElementById("swheight_row").innerHTML = swHeightHTML
 
         function forecastTable() {
             var weatherHtml = `<th scope="row">Weather</th>`;
@@ -472,23 +701,23 @@
             var windspeedHTML = `<th scope="row">Wind (km/h)</th>`;
             var windDirectionHTML = `<th scope="row">Wind Direction</th>`;
             var swellDirectionTHTML = `<th scope="row">Swell Direction</th>`;
-            var swellPeriodTHTML = `<th scope="row">Swell Period</th>`;
-            var swellHeightTHTML = `<th scope="row">Swell Height (m)</th>`;
-            var swHeightHTML = `<th scope="row">Significant Wave Height (m)	</th>`;
+            // var swellPeriodTHTML = `<th scope="row">Swell Period</th>`;
+            // var swellHeightTHTML = `<th scope="row">Swell Height (m)</th>`;
+            // var swHeightHTML = `<th scope="row">Significant Wave Height (m)	</th>`;
 
             for (x of forecastData['data']['weather']) {
                 if (x['date'] == document.getElementById('forecast_date').value) {
                     for (y of x['hourly']) {
-                        weatherHtml = weatherHtml + `<td><img src="${y['weatherIconUrl'][0]['value']}"/></td>`
+                        weatherHtml = weatherHtml + `<td><img src="${y['weatherIconUrl'][0]['value']}" style="width:36px;height:36px"/></td>`
                         temperatureHTML = temperatureHTML + `<td>${y['tempC']}</td>`
                         humidityHTML = humidityHTML + `<td>${y['humidity']}</td>`
                         pressureHTML = pressureHTML + `<td>${y['pressure']}</td>`
                         windspeedHTML = windspeedHTML + `<td>${y['windspeedKmph']}</td>`
                         windDirectionHTML = windDirectionHTML + `<td>${y['winddirDegree']}<i class='fas fa-arrow-up' style="transform: rotate(${y['winddirDegree']}deg)"></i></td>`
                         swellDirectionTHTML = swellDirectionTHTML + `<td>${y['swellDir']}<i class='fas fa-arrow-up' style="transform: rotate(${y['swellDir']}deg)"></i></td>`
-                        swellPeriodTHTML = swellPeriodTHTML + `<td>${y['swellPeriod_secs']}</td>`
-                        swellHeightTHTML = swellHeightTHTML + `<td>${y['swellHeight_m']}</td>`
-                        swHeightHTML = swHeightHTML + `<td>${y['sigHeight_m']}</td>`
+                        // swellPeriodTHTML = swellPeriodTHTML + `<td>${y['swellPeriod_secs']}</td>`
+                        // swellHeightTHTML = swellHeightTHTML + `<td>${y['swellHeight_m']}</td>`
+                        // swHeightHTML = swHeightHTML + `<td>${y['sigHeight_m']}</td>`
 
                     }
                 }
@@ -501,9 +730,9 @@
             document.getElementById("windspeed_row").innerHTML = windspeedHTML
             document.getElementById("winddirection_row").innerHTML = windDirectionHTML
             document.getElementById("swelldirection_row").innerHTML = swellDirectionTHTML
-            document.getElementById("swellperiod_row").innerHTML = swellPeriodTHTML
-            document.getElementById("swellheight_row").innerHTML = swellHeightTHTML
-            document.getElementById("swheight_row").innerHTML = swHeightHTML
+            // document.getElementById("swellperiod_row").innerHTML = swellPeriodTHTML
+            // document.getElementById("swellheight_row").innerHTML = swellHeightTHTML
+            // document.getElementById("swheight_row").innerHTML = swHeightHTML
 
         }
 

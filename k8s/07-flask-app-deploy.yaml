@@ -85,6 +85,7 @@ data:
     client_secret = 75640200bd814140c1e10fe3bd95ed65e9dd490d
     access_token = 8a06c8a86ac3ef93546cff4ea2cb42956cd60cf4
     refresh_token = 7e64f091f020ffc5486e9b6f8f97ce9b8ed2ad6e
+    imgur_username = Darkdrium
 
     [worldweatheronline]
     apiKey = 16293d33ab954ad0ae1193626211710

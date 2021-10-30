@@ -9,6 +9,9 @@ COPY requirements.txt .
 
 # install dependencies
 RUN pip install -r requirements.txt
+RUN apt-get update
+RUN apt install -y libgl1-mesa-glx
+
 
 # copy the content of the local src directory to the working directory
 COPY led_controller.py .
