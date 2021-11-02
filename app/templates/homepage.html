@@ -308,6 +308,21 @@
                                                     </td>
                                                 </tr>`
                 }
+                else if (one_event.event == "wet_device") {
+                    highPriorityCount = highPriorityCount + 1
+                    table_list = table_list + `   
+                                                <tr>
+                                                    <td>
+                                                        Water detected in float buoy
+                                                </td>
+                                                <td>${one_event.zone}</td>
+                                                <td >${one_event.datetime}</td>
+                                                <td class="text-danger">
+                                                        High
+                                                    </td>
+                                                </tr>`
+                }
+
 
             }
             insert_alert.innerHTML = table_list
@@ -434,6 +449,20 @@
                                                 <td >${one_event.datetime}</td>
                                                 <td class="text-success">
                                                         Low
+                                                    </td>
+                                                </tr>`
+                }
+                else if (one_event.event == "wet_device") {
+                    highPriorityCount = highPriorityCount + 1
+                    table_list = table_list + `   
+                                                <tr>
+                                                    <td>
+                                                        Water detected in float buoy
+                                                </td>
+                                                <td>${one_event.zone}</td>
+                                                <td >${one_event.datetime}</td>
+                                                <td class="text-danger">
+                                                        High
                                                     </td>
                                                 </tr>`
                 }

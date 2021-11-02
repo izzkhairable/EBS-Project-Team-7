@@ -73,7 +73,7 @@
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
                         <li class="sidebar-item pt-2">
-                            <a class="sidebar-link waves-effect waves-dark sidebar-link" href="dashboard"
+                            <a class="sidebar-link waves-effect waves-dark sidebar-link" href="/dashboard"
                                 aria-expanded="false">
                                 <i class="far fa-clock" aria-hidden="true"></i>
                                 <span class="hide-menu">Dashboard</span>
@@ -99,6 +99,12 @@
                                 <option value="monthly_view">Historical Monthly</option>
                             </select>
                         </form>
+                        <form class="form-horizontal form-material">
+                            <select id="zone_ddl" class="form-select shadow-none"
+                                onchange="javascript:location.href = this.value;">
+                            </select>
+                        </form>
+
                     </div>
                 </div>
             </div>
@@ -189,9 +195,7 @@
                                     </div>
                                 </div>
                             </form>
-
                             <div id="carousel_content">
-
                             </div>
                         </div>
                     </div>
@@ -283,6 +287,14 @@
                         </table>
                     </div>
                 </div>
+                <div class="row">
+                    <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12">
+                        <div class="white-box">
+                            <div id="waveIntensity"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- <div class="col-md-5 col-lg-5 col-sm-5 col-xs-5">
                         <img class="img-fluid" id="beach_img2" src="{{data3}}" />
                     </div> -->
@@ -297,6 +309,8 @@
         <input type="hidden" id="daily_visitor_history_count" value="{{daily_visitor_history_count}}" />
         <input type="hidden" id="monthly_visitor_history_count" value="{{monthly_visitor_history_count}}" />
         <input type="hidden" id="daily_sensor_list" value="{{daily_sensor_list}}" />
+        <input type="hidden" id="zone_list" value="{{zone_list}}" />
+        <input type="hidden" id="current_zone" value="{{current_zone}}" />
 
         <footer class="footer text-center"> 2021 © Ample Admin brought to you by <a
                 href="https://www.wrappixel.com/">wrappixel.com</a>
@@ -326,6 +340,19 @@
     <script src="{{url_for('static', filename='jquery/jquery-before-after-slider.js')}}"></script>
     <script src="{{url_for('static', filename='jquery/jquery-before-after-slider-min.js')}}"></script>
     <script>//https://www.highcharts.com/demo/line-labels
+
+        zoneList = document.getElementById("zone_list").value.split('|')
+        zoneDDL = ''
+        for (zone of zoneList) {
+            if (zone == document.getElementById("current_zone").value) {
+                zoneDDL = zoneDDL + `<option selected value="/dashboard/${zone}">${zone}</option>`
+            }
+            else {
+                zoneDDL = zoneDDL + `<option value="/dashboard/${zone}">${zone}</option>`
+            }
+        }
+        document.getElementById("zone_ddl").innerHTML = zoneDDL
+
         function isEmptyOrSpaces(str) {
             return str === null || str.match(/^ *$/) !== null;
         }
@@ -403,6 +430,10 @@
                 humidityList = []
                 pressureList = []
                 intensityList = []
+                gyroscopeXList = []
+                gyroscopeYList = []
+                gyroscopeZList = []
+
                 categoriesList = []
                 if (document.getElementById('view_type').value == "daily_view") {
                     dayOrMonth = "Days"
@@ -412,7 +443,9 @@
                         humidityList.push(Math.floor(jsonObj["ambientHumidity"]))
                         pressureList.push(Math.floor(jsonObj["ambientPressure"]))
                         intensityList.push(Math.floor(jsonObj["ambientLight"]))
-
+                        gyroscopeXList.push(Math.floor(jsonObj["gyroscopeX"]))
+                        gyroscopeYList.push(Math.floor(jsonObj["gyroscopeY"]))
+                        gyroscopeZList.push(Math.floor(jsonObj["gyroscopeZ"]))
                         categoriesList.push(new Date(jsonObj["date"]).getDate().toString() + "-" + parseInt(new Date(jsonObj["date"]).getMonth() + 1).toString() + "-" + new Date(jsonObj["date"]).getFullYear().toString())
                     }
                 }
@@ -562,10 +595,49 @@
                         enabled: false //disable legend https://api.highcharts.com/highcharts/legend
                     }
                 });
-
+                Highcharts.chart('waveIntensity', {
+                    chart: {
+                        type: 'line'
+                    },
+                    title: {
+                        text: 'Average Wave Intensity (Last ' + categoriesList.length + ' ' + dayOrMonth + ')'
+                    },
+                    subtitle: {
+                        text: 'Source: WorldClimate.com'
+                    },
+                    xAxis: {
+                        categories: categoriesList
+                    },
+                    yAxis: {
+                        title: {
+                            text: 'Wave Intensity',
+                            enabled: false
+                        }
+                    },
+                    plotOptions: {
+                        line: {
+                            dataLabels: {
+                                enabled: true
+                            },
+                            enableMouseTracking: false
+                        }
+                    },
+                    series: [{
+                        name: 'X',
+                        data: gyroscopeXList
+                    }, {
+                        name: 'Y',
+                        data: gyroscopeYList
+                    }, {
+                        name: 'Z',
+                        data: gyroscopeZList
+                    }],
+                    legend: {
+                        enabled: true //disable legend https://api.highcharts.com/highcharts/legend
+                    }
+                });
 
             }
-
         }
         latest_sensor_data = JSON.parse(document.getElementById("latest_sensor_data").value)
         document.getElementById("current_temperature").innerText = latest_sensor_data["ambientTemperature"] + " °C"

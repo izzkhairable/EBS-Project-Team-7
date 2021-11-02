@@ -13,7 +13,19 @@ docker push darrenho1994/beach-monitoring-system-flask-app
 
 kubectl config set-context --current --namespace=smu-team07 
 
-kubectl apply -f ./deployment.yaml
+kubectl apply -f ./02-external-event-receiver-function-deploy.yaml
+
+kubectl apply -f ./03-strong-wave-function-deploy.yaml
+
+kubectl apply -f ./04-data-collection-function-deploy.yaml
+
+kubectl apply -f ./05-wet-device-function-deploy.yaml
+
+kubectl apply -f ./06-nats-event-subscriptions.yaml
+
+kubectl apply -f ./07-led-controller-central-deploy.yaml
+
+kubectl apply -f ./08-flask-app-deploy.yaml
 
 
 How to access pod files:

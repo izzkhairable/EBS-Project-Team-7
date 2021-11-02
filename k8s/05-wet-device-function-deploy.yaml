@@ -1,0 +1,119 @@
+
+# Serverless function to retrieve IoT data and store it in Redis
+apiVersion: serverless.kyma-project.io/v1alpha1
+kind: Function
+metadata:
+  name: beach-monitoring-system-wet-device-function # Change here for your name!
+spec:
+  deps: "requests==2.26.0\r\nredis==3.5.3\r\ntwilio"
+  env:
+  - name: REDISDBNO 
+    value: "0" #Set the redis db number within your team (0-15)
+  - name: REDISHOST
+    value: redis
+  - name: REDISPORT
+    value: "6379"
+  - name: REDISPASSWORD
+    value: kPppOZp2hC
+  - name: IOTTHINGURL
+    value: https://appiot-mds.cfapps.eu10.hana.ondemand.com/Things('
+  - name: IOTTENANT
+    value: "1954515505"
+  - name: IOTMGMTURL
+    value: https://a4042ecf-281e-4d4a-b721-c9b43461e188.eu10.cp.iot.sap/a4042ecf-281e-4d4a-b721-c9b43461e188/iot/core/api/v1/tenant/
+  - name: IOTUSER
+    value: iot-thing-user
+  - name: IOTPASSWORD
+    value: SAPArm#01
+  - name: CLIENTSECRET
+    value: MqgvE0uZhB63HC4xtZtl5ifvS+8=
+  - name: CLIENTID
+    value: sb-32564232-426c-4b44-842d-1beed50a9c45!b102169|iotae_service!b5
+  - name: PYTHONUNBUFFERED
+    value: "TRUE"
+  - name: AUTHENTICATIONURL
+    value: https://smu-iot.authentication.eu10.hana.ondemand.com/oauth/token
+  - name: ACCOUNTSID
+    value: AC0a38e4d918e7c1e3e64ba772018512d9
+  - name: AUTHTOKEN
+    value: aab6a1ee1d105739257b1ca079c0385e
+  - name: FROMNO
+    value: "+16627802933"
+  - name: TONO
+    value: "+6592375375"
+  maxReplicas: 1
+  minReplicas: 1
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  runtime: python38
+  source: | 
+              import os
+              import redis
+              import json
+              import requests
+              import datetime
+              from requests.auth import HTTPBasicAuth
+              from twilio.rest import Client
+
+
+              def main(event, context):
+                  redisHost = os.environ.get('REDISHOST')
+                  redisPort = os.environ.get('REDISPORT')
+                  redisPassword = os.environ.get('REDISPASSWORD')
+                  redisDb = os.environ.get('REDISDBNO')
+                  r = redis.Redis(host=redisHost, port=redisPort, db=int(
+                      redisDb), password=redisPassword, socket_timeout=None, decode_responses=True)
+                  thingId = event["data"]["thingID"]
+                  thingLatitude = event["data"]["thingLatitude"]
+                  thingLongitude = event["data"]["thingLongitude"]
+                  thingZone = event["data"]["thingZone"]
+
+                  account_sid = os.environ.get('ACCOUNTSID')
+                  auth_token = os.environ.get('AUTHTOKEN')
+                  from_no = os.environ.get('FROMNO')
+                  to_no = os.environ.get('TONO')
+
+                  client = Client(account_sid, auth_token)
+
+                  #### Logging of strong wave event happens here #####
+                  wet_device_record_count = 0
+                  if len(r.lrange(thingId, 0, -1)) > 0:
+                      for event in r.lrange(thingId, 0, -1)[::-1]:
+                          jsonobj = json.loads(event)
+                          if jsonobj['event'] == 'wet_device':
+                              wet_device_record_count += 1
+                              prev_date = datetime.datetime.strptime(
+                                  jsonobj['datetime'], '%Y-%m-%d %H:%M:%S.%f')
+                              min_diff = (datetime.datetime.now() -
+                                          prev_date).total_seconds()/60
+                              # If the most recent event was logged more than 6 hours, we log again. If not, don't.
+                              if min_diff >= 360:
+                                  r.rpush(thingId, '{"event": "wet_device", "datetime": "' +
+                                          str(datetime.datetime.now()) + '", "zone": "' + thingZone + '"}')
+                                  message = client.messages \
+                                      .create(
+                                          body="Water detected in float buoy for Thing ID: " + thingId + " in " + thingZone,
+                                          from_=from_no,
+                                          to=to_no
+                                      )
+                                  print(message.sid)
+                              break
+                      if wet_device_record_count == 0:
+                          r.rpush(thingId, '{"event": "wet_device", "datetime": "' +
+                                  str(datetime.datetime.now()) + '", "zone": "' + thingZone + '"}')
+                          message = client.messages \
+                              .create(
+                                  body="Water detected in float buoy for Thing ID: " + thingId + " in " + thingZone,
+                                  from_=from_no,
+                                  to=to_no
+                              )
+                          print(message.sid)
+
+
+
+                  

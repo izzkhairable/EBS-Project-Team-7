@@ -74,7 +74,7 @@ data:
     delete_event_data_older_than_x_days = 30
 
     [sensor_data]
-    delete_sensor_data_older_than_x_days = 1
+    delete_sensor_data_older_than_x_days = 6
 
     [beach_counter]
     delete_beach_counter_data_older_than_x_days = 6
