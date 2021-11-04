@@ -43,7 +43,7 @@ def main():
     iotUser = config.get("sapiot", "iotUser")
     iotPassword = config.get("sapiot", "iotPassword").replace("'", "")
     #[ipCam]
-    ipCamUrl = config.get("ipCam", "ipCamUrl")
+    ipCamUrls = config.get("ipCam", "ipCamUrls")
 
     #[imgur]
     client_id = config.get("imgur", "client_id")
@@ -109,9 +109,16 @@ def main():
             beachCounterKey = current_thing + 'POPULATION'
             zone = str(json.loads(thing)['zone'])
 
-            imagelist = client.get_account_images(client_username, page=0)
+            
             insertImage = False
             ipCamOnline = False
+            ipCamArray = ipCamUrls.split('|')
+            ipCamUrl = 'https://i.imgur.com/afbveOM.jpeg'
+            for url in ipCamArray:
+                ipcam_url = url.split('-->')[0].strip()
+                ipcam_zone = url.split('-->')[1].strip()
+                if ipcam_zone == zone:
+                    ipCamUrl = ipcam_url
 
             try:
                 response = requests.get(ipCamUrl, timeout=1)
@@ -126,13 +133,20 @@ def main():
             if req.status_code == 200:
                 oplaOnline = json.loads(req.text)['online']
 
-            
+            imagelist = client.get_account_images(client_username, page=0)
+            curr_zone_image_count = 0
             if len(imagelist) > 0:
-                min_diff = (datetime.datetime.now() - datetime.datetime.strptime(imagelist[0].title, '%Y-%m-%d %H:%M:%S.%f')).total_seconds()/60
-                if min_diff >= upload_frequency_in_minutes:
-                    insertImage = True
-                else:
-                    pass
+                for image in imagelist:
+                    if image.description == zone:
+                        curr_zone_image_count = 1
+                        min_diff = (datetime.datetime.now() - datetime.datetime.strptime(image.title, '%Y-%m-%d %H:%M:%S.%f')).total_seconds()/60
+                        if min_diff >= upload_frequency_in_minutes:
+                            insertImage = True
+                        else:
+                            pass
+                        break
+                if curr_zone_image_count == 0:
+                    insertImage= True
             else:
                 insertImage = True
 
@@ -270,9 +284,11 @@ def main():
                                 event_time).total_seconds()/60
                     if min_diff > off_led_after_x_mins_of_no_wave:  # IF THE MOST RECENT EVENT IS MORE 30 MINUTES AGO, SEND THE COMMAND TO DEVICE ALERT THAT THERE'S NO LONGER WAVE!!!
                         sendCommand("close")
+                        r.set(eventKey + "_alertstatus", "close")
                     # IF THE MOST RECENT EVENT IS LESS THAN 30 MINUTES AGO, SEND THE COMMAND TO DEVICE ALERT OF WAVE EVENT.
                     elif min_diff <= off_led_after_x_mins_of_no_wave:
                         sendCommand("activate")
+                        r.set(eventKey + "_alertstatus", "activate")
                     break
 
             # if len(r.lrange(eventKey, 0, -1)) > 0:

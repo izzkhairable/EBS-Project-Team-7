@@ -51,7 +51,7 @@
                     <a class="nav-toggler waves-effect waves-light text-dark d-block d-md-none"
                         href="javascript:void(0)"><i class="ti-menu ti-close"></i></a>
                 </div>
-                <div class="navbar-collapse collapse" id="navbarSupportedContent" data-navbarbg="skin5">
+                <!-- <div class="navbar-collapse collapse" id="navbarSupportedContent" data-navbarbg="skin5">
                     <ul class="navbar-nav ms-auto d-flex align-items-center">
                         <li class=" in">
                             <form role="search" class="app-search d-none d-md-block me-3">
@@ -68,7 +68,7 @@
                                     class="text-white font-medium">Steave</span></a>
                         </li>
                     </ul>
-                </div>
+                </div> -->
             </nav>
         </header>
         <aside class="left-sidebar" data-sidebarbg="skin6">
@@ -152,13 +152,13 @@
                                 </div>
                             </div>
                             <div class="table-responsive">
-                                <table class="table no-wrap">
+                                <table class="table no-wrap" id="myTable">
                                     <thead>
                                         <tr>
-                                            <th class="border-top-0">Alert Details</th>
-                                            <th class="border-top-0">Zone</th>
-                                            <th class="border-top-0">Date</th>
-                                            <th class="border-top-0">Priority</th>
+                                            <th onclick="sortTable(0)" class="border-top-0">Alert Details</th>
+                                            <th onclick="sortTable(1)" class="border-top-0">Zone</th>
+                                            <th onclick="sortTable(2)" class="border-top-0">Date</th>
+                                            <th onclick="sortTable(3)" class="border-top-0">Priority</th>
                                         </tr>
                                     </thead>
                                     <tbody id="insert_alerts_log">
@@ -536,6 +536,61 @@
                 });
             }
         }
+        function sortTable(n) {
+  var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+  table = document.getElementById("myTable");
+  switching = true;
+  // Set the sorting direction to ascending:
+  dir = "asc";
+  /* Make a loop that will continue until
+  no switching has been done: */
+  while (switching) {
+    // Start by saying: no switching is done:
+    switching = false;
+    rows = table.rows;
+    /* Loop through all table rows (except the
+    first, which contains table headers): */
+    for (i = 1; i < (rows.length - 1); i++) {
+      // Start by saying there should be no switching:
+      shouldSwitch = false;
+      /* Get the two elements you want to compare,
+      one from current row and one from the next: */
+      x = rows[i].getElementsByTagName("TD")[n];
+      y = rows[i + 1].getElementsByTagName("TD")[n];
+      /* Check if the two rows should switch place,
+      based on the direction, asc or desc: */
+      if (dir == "asc") {
+        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+          // If so, mark as a switch and break the loop:
+          shouldSwitch = true;
+          break;
+        }
+      } else if (dir == "desc") {
+        if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+          // If so, mark as a switch and break the loop:
+          shouldSwitch = true;
+          break;
+        }
+      }
+    }
+    if (shouldSwitch) {
+      /* If a switch has been marked, make the switch
+      and mark that a switch has been done: */
+      rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+      switching = true;
+      // Each time a switch is done, increase this count by 1:
+      switchcount ++;
+    } else {
+      /* If no switching has been done AND the direction is "asc",
+      set the direction to "desc" and run the while loop again. */
+      if (switchcount == 0 && dir == "asc") {
+        dir = "desc";
+        switching = true;
+      }
+    }
+  }
+}
+
     </script>
     <script
         src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBI9woWgSBM-4ZR5JpxjibS-pIALzZo4WU&callback=initMap&libraries=&v=weekly"

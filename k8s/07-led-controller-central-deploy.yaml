@@ -54,7 +54,7 @@ data:
     iotPassword = 'SAPArm#01'
 
     [ipCam]
-    ipCamUrl = http://222.164.109.140:666/image.jpg
+    ipCamUrls = https://i.imgur.com/aSlpTb0.jpeg --> East Coast Park Zone 1 | https://i.imgur.com/l3UbyM5.jpeg --> Changi Beach Zone 1
 
     [imgur]
     client_id = 3ef4beacee8d63c
@@ -62,7 +62,7 @@ data:
     access_token = 8a06c8a86ac3ef93546cff4ea2cb42956cd60cf4
     refresh_token = 7e64f091f020ffc5486e9b6f8f97ce9b8ed2ad6e
     client_username = Darkdrium
-    upload_frequency_in_minutes = 5
+    upload_frequency_in_minutes = 180
 
     [led]
     off_led_after_x_mins_of_no_wave = 30
@@ -71,7 +71,7 @@ data:
     count_human_every_x_min = 5
 
     [event]
-    delete_event_data_older_than_x_days = 30
+    delete_event_data_older_than_x_days = 1
 
     [sensor_data]
     delete_sensor_data_older_than_x_days = 6

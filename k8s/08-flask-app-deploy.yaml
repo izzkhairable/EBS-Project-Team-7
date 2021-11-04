@@ -91,4 +91,4 @@ data:
     apiKey = 16293d33ab954ad0ae1193626211710
 
     [ipCam]
-    ipCamUrl = http://222.164.109.140:666/image.jpg
+    ipCamUrls = https://i.imgur.com/SazaHUq.jpeg --> East Coast Park Zone 1 | https://i.imgur.com/l3UbyM5.jpeg --> Changi Beach Zone 1

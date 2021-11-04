@@ -20,7 +20,11 @@ r.flushall()
 r.rpush("devices", "{\"thingId\": \"38ED5BF550EE4CC6AD2BE9A7BE7111A4\", \"deviceId\": \"dcac5d23-cf60-44ff-82e8-b1fb4fd69efb\", \"sensorId\": \"f1ff9a46-86f7-47ef-befb-ccb8a76b90a8\", \"commandCapabilityId\": \"24c65333-6630-46d2-b4b8-69ca3f3786df\", \"coordinate\": {\"lat\": \"1.3050856285437102\", \"lng\": \"103.93210128266621\"}, \"zone\": \"East Coast Park Zone 1\"}")
 r.rpush("devices", "{\"thingId\": \"38ED5BF550EE4CC6AD2BE9A7BE7111AZ\", \"deviceId\": \"dcac5d23-cf6z0-44ff-82e8-b1fb4fd69efb\", \"sensorId\": \"f1ff9a46-86f7-47ef-befb-ccb8a76b90a8\", \"commandCapabilityId\": \"24c65333-6630-46d2-b4b8-69ca3f3786df\", \"coordinate\": {\"lat\": \"1.3843981451960123\", \"lng\": \"104.00170223087149\"}, \"zone\": \"Changi Beach Zone 1\"}")
 
-r.rpush("38ED5BF550EE4CC6AD2BE9A7BE7111A4", "{\"event\": \"strong_wave\", \"datetime\": \"2021-10-23 18:14:52.989580\", \"zone\": \"East Coast Park Zone 1\"}")
+r.rpush("38ED5BF550EE4CC6AD2BE9A7BE7111A4", "{\"event\": \"wet_device\", \"datetime\": \"2021-10-24 18:14:52.989580\", \"zone\": \"East Coast Park Zone 1\"}")
+r.rpush("38ED5BF550EE4CC6AD2BE9A7BE7111A4", "{\"event\": \"ipcam_online\", \"datetime\": \"2021-10-24 18:14:52.989580\", \"zone\": \"East Coast Park Zone 1\"}")
+r.rpush("38ED5BF550EE4CC6AD2BE9A7BE7111A4", "{\"event\": \"ipcam_offline\", \"datetime\": \"2021-10-24 18:14:52.999580\", \"zone\": \"East Coast Park Zone 1\"}")
+r.rpush("38ED5BF550EE4CC6AD2BE9A7BE7111A4", "{\"event\": \"strong_wave\", \"datetime\": \"2021-11-03 18:14:52.989580\", \"zone\": \"East Coast Park Zone 1\"}")
+r.rpush("38ED5BF550EE4CC6AD2BE9A7BE7111A4", "{\"event\": \"strong_wave\", \"datetime\": \"2021-11-05 17:17:52.989580\", \"zone\": \"East Coast Park Zone 1\"}")
 
 
 r.rpush("38ED5BF550EE4CC6AD2BE9A7BE7111A4DATACOLLECTION", "{\"datetime\": \"2021-09-24 18:11:12.808428\", \"zone\": \"East Coast Park Zone 1\", \"ambientTemperature\": 31.0, \"ambientPressure\": 101.0, \"ambientLight\": 252, \"ambientHumidity\": 59, \"gyroscopeX\": 1.0, \"gyroscopeY\": -3.0, \"gyroscopeZ\": -1.0}")

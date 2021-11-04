@@ -47,7 +47,7 @@
                     <a class="nav-toggler waves-effect waves-light text-dark d-block d-md-none"
                         href="javascript:void(0)"><i class="ti-menu ti-close"></i></a>
                 </div>
-                <div class="navbar-collapse collapse" id="navbarSupportedContent" data-navbarbg="skin5">
+                <!-- <div class="navbar-collapse collapse" id="navbarSupportedContent" data-navbarbg="skin5">
                     <ul class="navbar-nav ms-auto d-flex align-items-center">
 
                         <li class=" in">
@@ -65,7 +65,7 @@
                                     class="text-white font-medium">Steave</span></a>
                         </li>
                     </ul>
-                </div>
+                </div> -->
             </nav>
         </header>
         <aside class="left-sidebar" data-sidebarbg="skin6">
@@ -183,19 +183,37 @@
                         <img class="img-fluid" id="beach_img" src="{{data2}}" />
                     </div> -->
                     <div class="col-md-3 col-lg-3 col-sm-3 col-xs-3">
-                        <div class="white-box">
-                            <h3 class="box-title">Beach Overview</h3>
-                            <form class="form-horizontal form-material">
-                                <div class="form-group mb-12">
-                                    <label class="col-sm-12">Select Time</label>
-                                    <div class="col-sm-12 border-bottom">
-                                        <select class="form-select shadow-none p-0 border-0 form-control-line"
-                                            id="renderer" onchange="renderImage()">
-                                        </select>
+                        <div class="container-fluid px-0">
+                            <div class="white-box">
+
+                                <div class="row justify-content-center">
+                                    <h3 class="text-center">
+                                        Swimming Condition</h3>
+                                    <h1 class="text-center">
+                                        {% if led_alert_status == "close" %}
+                                        <i class="far fa-check-circle" style="color:green"></i>
+                                        {% else %}
+                                        <i class="far fa-times-circle" style="color:red"></i>
+                                        {% endif %}
+                                    </h1>
+                                </div>
+                            </div>
+                            <div class="white-box">
+                                <div class="row justify-content-center">
+                                    <h3 class="box-title">Beach Overview</h3>
+                                    <form class="form-horizontal form-material">
+                                        <div class="form-group mb-12">
+                                            <label class="col-sm-12">Select Time</label>
+                                            <div class="col-sm-12 border-bottom">
+                                                <select class="form-select shadow-none p-0 border-0 form-control-line"
+                                                    id="renderer" onchange="renderImage()">
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </form>
+                                    <div id="carousel_content">
                                     </div>
                                 </div>
-                            </form>
-                            <div id="carousel_content">
                             </div>
                         </div>
                     </div>
@@ -287,13 +305,13 @@
                         </table>
                     </div>
                 </div>
-                <div class="row">
+                <!-- <div class="row">
                     <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12">
                         <div class="white-box">
                             <div id="waveIntensity"></div>
                         </div>
                     </div>
-                </div>
+                </div> -->
 
                 <!-- <div class="col-md-5 col-lg-5 col-sm-5 col-xs-5">
                         <img class="img-fluid" id="beach_img2" src="{{data3}}" />
@@ -595,47 +613,47 @@
                         enabled: false //disable legend https://api.highcharts.com/highcharts/legend
                     }
                 });
-                Highcharts.chart('waveIntensity', {
-                    chart: {
-                        type: 'line'
-                    },
-                    title: {
-                        text: 'Average Wave Intensity (Last ' + categoriesList.length + ' ' + dayOrMonth + ')'
-                    },
-                    subtitle: {
-                        text: 'Source: WorldClimate.com'
-                    },
-                    xAxis: {
-                        categories: categoriesList
-                    },
-                    yAxis: {
-                        title: {
-                            text: 'Wave Intensity',
-                            enabled: false
-                        }
-                    },
-                    plotOptions: {
-                        line: {
-                            dataLabels: {
-                                enabled: true
-                            },
-                            enableMouseTracking: false
-                        }
-                    },
-                    series: [{
-                        name: 'X',
-                        data: gyroscopeXList
-                    }, {
-                        name: 'Y',
-                        data: gyroscopeYList
-                    }, {
-                        name: 'Z',
-                        data: gyroscopeZList
-                    }],
-                    legend: {
-                        enabled: true //disable legend https://api.highcharts.com/highcharts/legend
-                    }
-                });
+                // Highcharts.chart('waveIntensity', {
+                //     chart: {
+                //         type: 'line'
+                //     },
+                //     title: {
+                //         text: 'Average Wave Intensity (Last ' + categoriesList.length + ' ' + dayOrMonth + ')'
+                //     },
+                //     subtitle: {
+                //         text: 'Source: WorldClimate.com'
+                //     },
+                //     xAxis: {
+                //         categories: categoriesList
+                //     },
+                //     yAxis: {
+                //         title: {
+                //             text: 'Wave Intensity',
+                //             enabled: false
+                //         }
+                //     },
+                //     plotOptions: {
+                //         line: {
+                //             dataLabels: {
+                //                 enabled: true
+                //             },
+                //             enableMouseTracking: false
+                //         }
+                //     },
+                //     series: [{
+                //         name: 'X',
+                //         data: gyroscopeXList
+                //     }, {
+                //         name: 'Y',
+                //         data: gyroscopeYList
+                //     }, {
+                //         name: 'Z',
+                //         data: gyroscopeZList
+                //     }],
+                //     legend: {
+                //         enabled: true //disable legend https://api.highcharts.com/highcharts/legend
+                //     }
+                // });
 
             }
         }
@@ -661,7 +679,7 @@
                     data-bs-interval="false">
                     <div class="carousel-inner">
                         <div class="carousel-item active">
-                            <a href="{{url_for('static', filename='image/image.png')}}"><img src="{{url_for('static', filename='image/image.png')}}" class="d-block w-100" alt="..."></a>
+                            <a href="{{url_for('static', filename='image/image.png')}}"><img src="{{url_for('static', filename='image/image.png')}}?rev=${new Date().getTime()}" class="d-block w-100" alt="..."></a> 
                         </div>
                     </div>
                     <button class="invisible carousel-control-prev" type="button"
@@ -677,6 +695,7 @@
                 </div>
 
             `
+        //https://stackoverflow.com/questions/41725252/how-to-prevent-browser-image-caching-in-html
 
 
         function renderImage() {

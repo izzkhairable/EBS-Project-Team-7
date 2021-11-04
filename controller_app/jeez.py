@@ -62,7 +62,7 @@ commandUrl = 'https://a4042ecf-281e-4d4a-b721-c9b43461e188.eu10.cp.iot.sap/a4042
 iotUser = 'iot-thing-user' # Common user, you can keep it!
 iotPassword = 'SAPArm#01'
 #[ipCam]
-ipCamUrl = 'http://222.164.109.140:666/image.jpg'
+ipCamUrls = 'https://i.imgur.com/aSlpTb0.jpeg --> East Coast Park Zone 1 | https://i.imgur.com/l3UbyM5.jpeg --> Changi Beach Zone 1'
 
 #[imgur]
 client_id = '3ef4beacee8d63c'
@@ -107,9 +107,16 @@ if len(r.lrange('devices', 0, -1)) > 0:
         beachCounterKey = current_thing + 'POPULATION'
         zone = str(json.loads(thing)['zone'])
 
-        imagelist = client.get_account_images(client_username, page=0)
+        
         insertImage = False
         ipCamOnline = False
+        ipCamArray = ipCamUrls.split('|')
+        ipCamUrl = 'https://i.imgur.com/afbveOM.jpeg'
+        for url in ipCamArray:
+            ipcam_url = url.split('-->')[0].strip()
+            ipcam_zone = url.split('-->')[1].strip()
+            if ipcam_zone == zone:
+                ipCamUrl = ipcam_url
 
         try:
             response = requests.get(ipCamUrl, timeout=1)
@@ -124,22 +131,29 @@ if len(r.lrange('devices', 0, -1)) > 0:
         if req.status_code == 200:
             oplaOnline = json.loads(req.text)['online']
 
-        
-        if len(imagelist) > 0:
-            min_diff = (datetime.datetime.now() - datetime.datetime.strptime(imagelist[0].title, '%Y-%m-%d %H:%M:%S.%f')).total_seconds()/60
-            if min_diff >= upload_frequency_in_minutes:
-                insertImage = True
-            else:
-                pass
-        else:
-            insertImage = True
+        # imagelist = client.get_account_images(client_username, page=0)
+        # curr_zone_image_count = 0
+        # if len(imagelist) > 0:
+        #     for image in imagelist:
+        #         if image.description == zone:
+        #             curr_zone_image_count = 1
+        #             min_diff = (datetime.datetime.now() - datetime.datetime.strptime(image.title, '%Y-%m-%d %H:%M:%S.%f')).total_seconds()/60
+        #             if min_diff >= upload_frequency_in_minutes:
+        #                 insertImage = True
+        #             else:
+        #                 pass
+        #             break
+        #     if curr_zone_image_count == 0:
+        #         insertImage= True
+        # else:
+        #     insertImage = True
 
-        if insertImage == True and ipCamOnline == True:
-            response = requests.get(ipCamUrl, timeout=1)
-            file = open(os.path.dirname(os.path.abspath(__file__)) + "/image.png", "wb")
-            file.write(response.content)
-            file.close()
-            client.upload_from_path(os.path.dirname(os.path.abspath(__file__)) + "/image.png", anon=False, config={'title':str(datetime.datetime.now()), 'description': zone}) 
+        # if insertImage == True and ipCamOnline == True:
+        #     response = requests.get(ipCamUrl, timeout=1)
+        #     file = open(os.path.dirname(os.path.abspath(__file__)) + "/image.png", "wb")
+        #     file.write(response.content)
+        #     file.close()
+        #     client.upload_from_path(os.path.dirname(os.path.abspath(__file__)) + "/image.png", anon=False, config={'title':str(datetime.datetime.now()), 'description': zone}) 
 
         ipcam_last_offline = None
         ipcam_last_online = None
@@ -258,71 +272,6 @@ if len(r.lrange('devices', 0, -1)) > 0:
                 r.lrem(dataCollectionKey, 1, data)
             else:
                 break
-        # if len(r.lrange(dataCollectionKey, 0, -1)) > 0:
-        #     latest_sensor_data = json.loads(r.lrange(dataCollectionKey, -1, -1)[0]) 
-        #     data_collection_list = r.lrange(dataCollectionKey, 0, -1)
-        #     total_temperature_for_current_day = 0
-        #     total_no_of_data_for_current_day = 0
-        #     total_temperature_for_current_month = 0
-        #     total_no_of_data_for_current_month = 0
-        #     for index in range(0, len(data_collection_list)):  
-        #         jsonobj = json.loads(data_collection_list[index])
-        #         eventdate = datetime.datetime.strptime(jsonobj["datetime"], '%Y-%m-%d %H:%M:%S.%f')
-        #         eventyear = eventdate.year
-        #         eventmonth = eventdate.month
-        #         eventday = eventdate.day
-        #         previousjsonobj = json.loads(data_collection_list[index-1])
-        #         previouseventdate = datetime.datetime.strptime(previousjsonobj["datetime"], '%Y-%m-%d %H:%M:%S.%f')
-        #         if index > 0 and index < len(data_collection_list)-1: #if we between 2nd to 2nd last item
-        #             if (eventyear == previouseventdate.year and eventmonth == previouseventdate.month):
-        #                 total_temperature_for_current_month+=jsonobj['ambientTemperature']
-        #                 total_no_of_data_for_current_month+=1
-        #                 if eventday == previouseventdate.day:
-        #                     total_temperature_for_current_day+=jsonobj['ambientTemperature']
-        #                     total_no_of_data_for_current_day+=1
-        #                 else:
-        #                     r.rpush(current_thing + 'DAILYSENSORDATA', json.dumps({"date": str(previouseventdate), "temp": total_temperature_for_current_day/total_no_of_data_for_current_day}))
-        #                     total_temperature_for_current_day = jsonobj['ambientTemperature']
-        #                     total_no_of_data_for_current_day = 1
-        #             else:
-        #                 r.rpush(current_thing + 'DAILYSENSORDATA', json.dumps({"date": str(previouseventdate), "temp": total_temperature_for_current_day/total_no_of_data_for_current_day}))
-        #                 total_temperature_for_current_day = jsonobj['ambientTemperature']
-        #                 total_no_of_data_for_current_day = 1
-        #                 r.rpush(current_thing + 'MONTHLYSENSORDATA', json.dumps({"date": str(previouseventdate), "temp": total_temperature_for_current_month/total_no_of_data_for_current_month}))
-        #                 total_temperature_for_current_month = jsonobj['ambientTemperature']
-        #                 total_no_of_data_for_current_month = 1
-        #         elif index == len(data_collection_list)-1: #if we are at the last item
-        #             if (eventyear == previouseventdate.year and eventmonth == previouseventdate.month):
-        #                 total_temperature_for_current_month+=jsonobj['ambientTemperature']
-        #                 total_no_of_data_for_current_month+=1
-        #                 r.rpush(current_thing + 'MONTHLYSENSORDATA', json.dumps({"date": str(eventdate), "temp": total_temperature_for_current_month/total_no_of_data_for_current_month}))
-
-        #                 if eventday == previouseventdate.day:
-        #                     total_temperature_for_current_day+=jsonobj['ambientTemperature']
-        #                     total_no_of_data_for_current_day+=1
-        #                     r.rpush(current_thing + 'DAILYSENSORDATA', json.dumps({"date": str(eventdate), "temp": total_temperature_for_current_day/total_no_of_data_for_current_day}))
-        #                 else:
-        #                     r.rpush(current_thing + 'DAILYSENSORDATA', json.dumps({"date": str(previouseventdate), "temp": total_temperature_for_current_day/total_no_of_data_for_current_day}))
-        #                     total_temperature_for_current_day = jsonobj['ambientTemperature']
-        #                     total_no_of_data_for_current_day = 1
-        #                     r.rpush(current_thing + 'DAILYSENSORDATA', json.dumps({"date": str(eventdate), "temp": total_temperature_for_current_day/total_no_of_data_for_current_day}))
-        #             else:
-        #                 r.rpush(current_thing + 'DAILYSENSORDATA', json.dumps({"date": str(previouseventdate), "temp": total_temperature_for_current_day/total_no_of_data_for_current_day}))
-        #                 total_temperature_for_current_day = jsonobj['ambientTemperature']
-        #                 total_no_of_data_for_current_day = 1
-        #                 r.rpush(current_thing + 'DAILYSENSORDATA', json.dumps({"date": str(eventdate), "temp": total_temperature_for_current_day/total_no_of_data_for_current_day}))
-        #                 r.rpush(current_thing + 'MONTHLYSENSORDATA', json.dumps({"date": str(previouseventdate), "temp": total_temperature_for_current_month/total_no_of_data_for_current_month}))
-        #                 total_temperature_for_current_month = jsonobj['ambientTemperature']
-        #                 total_no_of_data_for_current_month = 1
-        #                 r.rpush(current_thing + 'MONTHLYSENSORDATA', json.dumps({"date": str(eventdate), "temp": total_temperature_for_current_month/total_no_of_data_for_current_month}))
-        #         elif index == 0: #if we are at the first item
-        #             total_temperature_for_current_day+=jsonobj['ambientTemperature']
-        #             total_no_of_data_for_current_day+=1
-        #             total_temperature_for_current_month+=jsonobj['ambientTemperature']
-        #             total_no_of_data_for_current_month+=1
-        #         r.lrem(dataCollectionKey, 1, data_collection_list[index])
-        
-
 
         for event in r.lrange(eventKey, 0, -1)[::-1]: 
             event_type = json.loads(event)["event"]
@@ -333,11 +282,12 @@ if len(r.lrange('devices', 0, -1)) > 0:
                             event_time).total_seconds()/60
                 if min_diff > off_led_after_x_mins_of_no_wave:  # IF THE MOST RECENT EVENT IS MORE 30 MINUTES AGO, SEND THE COMMAND TO DEVICE ALERT THAT THERE'S NO LONGER WAVE!!!
                     sendCommand("close")
+                    r.set(eventKey + "_alertstatus", "close")
                 # IF THE MOST RECENT EVENT IS LESS THAN 30 MINUTES AGO, SEND THE COMMAND TO DEVICE ALERT OF WAVE EVENT.
                 elif min_diff <= off_led_after_x_mins_of_no_wave:
                     sendCommand("activate")
+                    r.set(eventKey + "_alertstatus", "activate")
                 break
-
         # if len(r.lrange(eventKey, 0, -1)) > 0:
         #     data = json.loads(r.lrange(eventKey, 0, -1)[-1])
         #     event_type = data["event"]
@@ -369,17 +319,5 @@ if len(r.lrange('devices', 0, -1)) > 0:
                 count = humanDetector(ipCamUrl)
                 current_datetime = datetime.datetime.now()
                 r.rpush(beachCounterKey, "{\"datetime\": \"" + str(current_datetime) + "\", \"people_count\": " + str(count) + "}")
-
-#print events
-# print(r.lrange('38ED5BF550EE4CC6AD2BE9A7BE7111A4', 0, -1))
-# print(r.lrange('38ED5BF550EE4CC6AD2BE9A7BE7111AZ', 0, -1))
-#print daily 
-print("daily data")
-print(r.lrange('38ED5BF550EE4CC6AD2BE9A7BE7111A4DAILYSENSORDATA', 0, -1))
-#print monthly
-print("monthly data")
-print(r.lrange('38ED5BF550EE4CC6AD2BE9A7BE7111A4MONTHLYSENSORDATA', 0, -1))
-
-#print sensor
-print("sensor data")
-print(len(r.lrange('38ED5BF550EE4CC6AD2BE9A7BE7111A4DATACOLLECTION', 0, -1)))
+print(r.lrange('38ED5BF550EE4CC6AD2BE9A7BE7111A4',0, -1))
+print(r.lrange('38ED5BF550EE4CC6AD2BE9A7BE7111AZ',0, -1))

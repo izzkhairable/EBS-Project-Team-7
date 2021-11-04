@@ -49,8 +49,8 @@ def detectByPathImage(path, output_path):
 
 app = Flask(__name__)
 
-# config = configparser.ConfigParser(inline_comment_prefixes="#")
-# config.read(['./config/flaskapp.cfg'])
+config = configparser.ConfigParser(inline_comment_prefixes="#")
+config.read(['./config/flaskapp.cfg'])
 
 # # #[redis]
 # redisHost = config.get("redis", "redisHost")
@@ -68,14 +68,13 @@ app = Flask(__name__)
 # imgur_username = config.get("imgur", "imgur_username")
 
 # #[ipCam]
-# ipCamUrl = config.get("ipCam", "ipCamUrl")
+# ipCamUrls = config.get("ipCam", "ipCamUrls")
 
 # #[worldweatheronline]
 # apiKey = config.get("worldweatheronline", "apiKey")
 
 
-ipCamUrl = 'https://imagesvc.meredithcorp.io/v3/mm/image?url=https%3A%2F%2Fstatic.onecms.io%2Fwp-content%2Fuploads%2Fsites%2F38%2F2014%2F11%2F12220214%2Fshutterstock_159281780.jpg'
-# ipCamUrl = 'http://222.164.109.140:666/image.jpg'
+ipCamUrls = 'https://i.imgur.com/aSlpTb0.jpeg --> East Coast Park Zone 1 | https://i.imgur.com/l3UbyM5.jpeg --> Changi Beach Zone 1'
 redisHost = 'localhost'
 redisPort = '6379'
 redisPassword = ''
@@ -150,21 +149,36 @@ def dashboard_noroute():
 def dashboard(zone):
     if len(r.lrange('devices', 0, -1)) > 0:
         zone_list = ''
+
         for thing in r.lrange('devices', 0, -1):
-            print(thing)
             thingjson = json.loads(thing)
             curr_zone = thingjson['zone']
             curr_thing = thingjson['thingId']
             lat = thingjson["coordinate"]["lat"]
             lng = thingjson["coordinate"]["lng"]
+            ipCamArray = ipCamUrls.split('|')
+
+            ipCamUrl = 'https://i.imgur.com/afbveOM.jpeg'
+            for url in ipCamArray:
+                ipcam_url = url.split('-->')[0].strip()
+                ipcam_zone = url.split('-->')[1].strip()
+                if ipcam_zone == zone:
+                    ipCamUrl = ipcam_url
+
+
             zone_list+=curr_zone + '|'
             if curr_zone == zone:
+                led_alert_status = r.get(curr_thing + "_alertstatus")
+                if led_alert_status is None:
+                    led_alert_status = "close"
+
                 
                 items = client.get_account_images(imgur_username, page=0)
                 item_list = ''
                 for item in items:
-                    curr_item = '{"link": "' + item.link + '", "title": "' + item.title + '"}'
-                    item_list = item_list + curr_item + "|"
+                    if item.description == curr_zone:
+                        curr_item = '{"link": "' + item.link + '", "title": "' + item.title + '"}'
+                        item_list = item_list + curr_item + "|"
                 # forecast_data = json.dumps(requests.get('http://api.worldweatheronline.com/premium/v1/marine.ashx?key=' + apiKey + '&format=json&q=' + lat + ',' + lng).json())
                 forecast_data = json.dumps({
                         "data": {
@@ -3196,7 +3210,7 @@ def dashboard(zone):
                     file.close()
                 except:
                     print("Your ipCamUrl must be down.")
-        return render_template("dashboard.html", current_zone=zone, zone_list=zone_list[:-1] , daily_sensor_list=daily_sensor_list[:-1], monthly_visitor_history_count=monthly_visitor_history_count[:-1], daily_visitor_history_count=daily_visitor_history_count[:-1], people_count=count, data=item_list[:-1], forecast_data=forecast_data, next_day_forecast=json.dumps(json.loads(forecast_data)["data"]["weather"][0]), latest_sensor_data=json.dumps(latest_sensor_data))
+        return render_template("dashboard.html", led_alert_status=led_alert_status, current_zone=zone, zone_list=zone_list[:-1] , daily_sensor_list=daily_sensor_list[:-1], monthly_visitor_history_count=monthly_visitor_history_count[:-1], daily_visitor_history_count=daily_visitor_history_count[:-1], people_count=count, data=item_list[:-1], forecast_data=forecast_data, next_day_forecast=json.dumps(json.loads(forecast_data)["data"]["weather"][0]), latest_sensor_data=json.dumps(latest_sensor_data))
     else:
         return redirect('/')
 if __name__ == "__main__":

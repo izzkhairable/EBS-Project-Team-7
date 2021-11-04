@@ -8,8 +8,10 @@
 
 
 docker build -t darrenho1994/beach-monitoring-system-flask-app:latest -f Dockerfile .
+docker build -t darrenho1994/led-controller:latest -f Dockerfile .
 
 docker push darrenho1994/beach-monitoring-system-flask-app
+docker push darrenho1994/led-controller
 
 kubectl config set-context --current --namespace=smu-team07 
 

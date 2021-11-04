@@ -1,9 +1,3 @@
-from os import stat
-import requests
-url = "http://222.164.109.140:666/image.jpg"
+import datetime
 
-try:
-    status_code = requests.get(url, timeout=3)
-except:
-    status_code = "offline"
-print(status_code)
+print((datetime.datetime.strptime('2021-11-04 08:23:05.968344', '%Y-%m-%d %H:%M:%S.%f') - datetime.datetime.strptime('2021-11-02 18:41:31.919250', '%Y-%m-%d %H:%M:%S.%f')).days)
